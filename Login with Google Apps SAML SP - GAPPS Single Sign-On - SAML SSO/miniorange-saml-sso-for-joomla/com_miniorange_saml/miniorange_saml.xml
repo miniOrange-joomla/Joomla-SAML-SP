@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="3.0" method="upgrade">
+    <name>com_miniorange_saml</name>
+    <creationDate>May 2017</creationDate>
+    <author>miniOrange Security Software Pvt. Ltd.</author>
+    <authorEmail>info@xecurify.com</authorEmail>
+    <authorUrl>https://www.miniorange.com/</authorUrl>
+    <copyright>Copyright (C) 2015 miniOrange. All rights reserved.</copyright>
+    <license>GNU General Public License version 3; see LICENSE.txt</license> 
+    <version>10.3</version>
+    <description>SAML SSO for Joomla - Developed by miniOrange</description>
+    
+    <install> <!-- Runs on install -->
+        <sql>
+            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+    <update>
+		<schemas>
+			<schemapath type="mysql">sql/updates/mysql</schemapath>
+		</schemas>
+	</update>
+    <uninstall> <!-- Runs on uninstall -->
+        <sql>
+            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
+
+    <files folder="site">
+        <filename>index.html</filename>
+        <filename>miniorange_saml.php</filename>
+        <filename>controller.php</filename>
+        <filename>router.php</filename>
+        <folder>views</folder>
+        <folder>models</folder>
+        <folder>controllers</folder>
+        <folder>helpers</folder>
+    </files>
+    <media destination="com_miniorange_saml" folder="media">
+        <folder>js</folder>
+        <folder>css</folder>
+    </media>
+    <languages folder="languages/site">
+        
+			<language tag="en-GB">en-GB/en-GB.com_miniorange_saml.ini</language>
+    </languages>
+    <administration>
+        <menu img="media/com_miniorange_saml/images/s_com_miniorange_saml.png" >COM_MINIORANGE_SAML</menu>
+		<submenu>
+            <menu link="option=com_miniorange_saml&amp;tab=overview">COM_MINIORANGE_SAML_SP_OVERVIEW</menu>
+            <menu link="option=com_miniorange_saml&amp;tab=idp">COM_MINIORANGE_SAML_IDP </menu>
+			<menu link="option=com_miniorange_saml&amp;tab=description">COM_MINIORANGE_SAML_DESCRIPTION </menu>
+			<menu link="option=com_miniorange_saml&amp;tab=sso_settings">COM_MINIORANGE_SAML_LOGINSETTINGS </menu>
+			<menu link="option=com_miniorange_saml&amp;tab=attribute_mapping">COM_MINIORANGE_SAML_MAPPING</menu>
+			<menu link="option=com_miniorange_saml&amp;tab=licensing">COM_MINIORANGE_SAML_LICENSING </menu>
+            
+		</submenu>
+        <files folder="administrator">
+            <filename>access.xml</filename>
+            <filename>config.xml</filename>
+            <filename>controller.php</filename>
+            <filename>index.html</filename>
+            <filename>miniorange_saml.php</filename>
+            <folder>controllers</folder>
+            <folder>assets</folder>
+            <folder>helpers</folder>
+            <folder>models</folder>
+            <folder>sql</folder>
+            <folder>tables</folder>
+            <folder>views</folder>
+        </files>
+        <languages folder="languages/administrator">        
+	        <language tag="en-GB">en-GB/en-GB.com_miniorange_saml.ini</language>
+	        <language tag="en-GB">en-GB/en-GB.com_miniorange_saml.sys.ini</language>
+            <language tag="de-DE">de-DE/de-DE.com_miniorange_saml.ini</language>
+            <language tag="de-DE">de-DE/de-DE.com_miniorange_saml.sys.ini</language>
+            <language tag="ru-RU">ru-RU/ru-RU.com_miniorange_saml.ini</language>
+            <language tag="ru-RU">ru-RU/ru-RU.com_miniorange_saml.sys.ini</language>
+            <language tag="nl-NL">nl-NL/nl-NL.com_miniorange_saml.ini</language>
+            <language tag="nl-NL">nl-NL/nl-NL.com_miniorange_saml.sys.ini</language>
+            <language tag="fr-FR">fr-FR/fr-FR.com_miniorange_saml.ini</language>
+            <language tag="fr-FR">fr-FR/fr-FR.com_miniorange_saml.sys.ini</language>
+            <language tag="it-IT">it-IT/it-IT.com_miniorange_saml.ini</language>
+            <language tag="it-IT">it-IT/it-IT.com_miniorange_saml.sys.ini</language>
+            <language tag="zh-CN">zh-CN/zh-CN.com_miniorange_saml.ini</language>
+            <language tag="zh-CN">zh-CN/zh-CN.com_miniorange_saml.sys.ini</language>
+            <language tag="es-ES">es-ES/es-ES.com_miniorange_saml.ini</language>
+            <language tag="es-ES">es-ES/es-ES.com_miniorange_saml.sys.ini</language>
+            <language tag="pt-BR">pt-BR/pt-BR.com_miniorange_saml.ini</language>
+            <language tag="pt-BR">pt-BR/pt-BR.com_miniorange_saml.sys.ini</language>
+            <language tag="da-DK">da-DK/da-DK.com_miniorange_saml.ini</language>
+            <language tag="da-DK">da-DK/da-DK.com_miniorange_saml.sys.ini</language>
+            <language tag="cs-CZ">cs-CZ/cs-CZ.com_miniorange_saml.ini</language>
+            <language tag="cs-CZ">cs-CZ/cs-CZ.com_miniorange_saml.sys.ini</language>
+            <language tag="el-GR">el-GR/el-GR.com_miniorange_saml.ini</language>
+            <language tag="el-GR">el-GR/el-GR.com_miniorange_saml.sys.ini</language>
+            <language tag="hu-HU">hu-HU/hu-HU.com_miniorange_saml.ini</language>
+            <language tag="hu-HU">hu-HU/hu-HU.com_miniorange_saml.sys.ini</language>
+            <language tag="ja-JP">ja-JP/ja-JP.com_miniorange_saml.ini</language>
+            <language tag="ja-JP">ja-JP/ja-JP.com_miniorange_saml.sys.ini</language>
+            <language tag="sr-RS">sr-RS/sr-RS.com_miniorange_saml.ini</language>
+            <language tag="sr-RS">sr-RS/sr-RS.com_miniorange_saml.sys.ini</language>
+            <language tag="sr-YU">sr-YU/sr-YU.com_miniorange_saml.ini</language>
+            <language tag="sr-YU">sr-YU/sr-YU.com_miniorange_saml.sys.ini</language>
+            <language tag="sv-SE">sv-SE/sv-SE.com_miniorange_saml.ini</language>
+            <language tag="sv-SE">sv-SE/sv-SE.com_miniorange_saml.sys.ini</language>
+            <language tag="th-TH">th-TH/th-TH.com_miniorange_saml.ini</language>
+            <language tag="th-TH">th-TH/th-TH.com_miniorange_saml.sys.ini</language>
+        </languages>
+    </administration>
+	<updateservers><server type="extension" priority="1" name="MiniorangeSSO">https://prod-marketing-site.s3.amazonaws.com/plugins/joomla/joomla_plugin_update.xml</server></updateservers>
+</extension>
