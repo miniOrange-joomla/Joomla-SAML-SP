@@ -13,13 +13,13 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Installer\InstallerHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\Installer;
-
+include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
 class mo_saml_hander{
     function getResource(){
 
       $uid=SAML_Utilities::getSuperUser();
       $AdminUser =SAML_Utilities::_load_db_values('#__users','loadAssoc','*', 'id', $uid);
-      $db=Factory::getDBO();
+      $db=MoSamlDbHelper::getDb();
       $columnArr=$db->getTableColumns("#__users");
       $appdata =SAML_Utilities::_load_db_values('#__miniorange_saml_config','loadAssoc','*', 'id', 1);
       $customer_details=SAML_Utilities::_load_db_values('#__miniorange_saml_customer_details','loadAssoc','*', 'id', 1);

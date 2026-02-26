@@ -12,6 +12,33 @@ Enhance your Joomla site's security with **Joomla SAML Single Sign-On (SSO)**. T
 
 ---
 
+## Installation
+
+Download the latest installable package:
+
+**[Download Joomla SAML SP – Login with ADFS Latest Version](https://prod-marketing-site.s3.amazonaws.com/plugins/joomla/saml-sso-login-with-google-apps.zip)**
+
+OR
+
+Go to **Releases → saml-sso-login-with-google-apps.zip**
+
+---
+
+## Quick Setup:
+1. Login to Joomla Administrator  
+   `https://your-site.com/administrator`
+
+2. Go to **Extensions → Manage → Install**
+
+3. Upload the zip – ***saml-sso-login-with-google-apps.zip***  
+   OR search for the **SAML SP Login With Google Apps** and install it.
+
+4. Once installation is successful, click ***Get Started***
+
+5. Configure the plugin using the **[Setup Guide](https://plugins.miniorange.com/joomla-single-sign-sso-using-google-apps-idp)**
+
+---
+
 ## Free Version Features:
 - Login using IDP credentials  
 - Automatic user registration for new users  
@@ -67,13 +94,6 @@ This plugin supports a wide range of SAML-compliant providers, including:
 
 ---
 
-## Get Started:
-1. Go to **Extensions → Manage → Install**
-2. Search for **"Joomla SAML Single Sign-On SSO"**
-3. Configure under **Component → SSO Plugin → IDP Setup**
-
----
-
 ## Dependencies:
 - **NONE**
 
@@ -87,3 +107,6 @@ Optimize your Joomla site with seamless SSO today!
 
 ## Website:
 Explore all Joomla plugins at: **https://plugins.miniorange.com**
+
+![GitHub Downloads](https://img.shields.io/github/downloads/miniOrange-joomla/Joomla-SAML-SP/total?cacheSeconds=60)
+<img src="https://komarev.com/ghpvc/?username=miniOrange-joomla&label=Repo%20Views&color=0e75b6&style=flat" />

@@ -11,6 +11,8 @@
 
 defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\Factory;
+use Joomla\Database\DatabaseInterface;
+
 class plgSystemSamlredirectInstallerScript
 {
     /**
@@ -20,18 +22,29 @@ class plgSystemSamlredirectInstallerScript
      *
      * @return void
      */
-    public function install($parent) 
+    public function install($parent)
     {
+        $db = $this->getDb();
+        $query1 = $db->getQuery(true);
+        $query1->update('#__extensions');
+        $query1->set($db->quoteName('enabled') . ' = 1');
+        $query1->where($db->quoteName('element') . ' = ' . $db->quote('samlredirect'));
+        $query1->where($db->quoteName('type') . ' = ' . $db->quote('plugin'));
+        $db->setQuery($query1);
+        $db->execute();
+    }
 
-          $db  = Factory::getDbo();
-          $query1 = $db->getQuery(true);
-          $query1->update('#__extensions');
-          $query1->set($db->quoteName('enabled') . ' = 1');
-          $query1->where($db->quoteName('element') . ' = ' . $db->quote('samlredirect'));
-          $query1->where($db->quoteName('type') . ' = ' . $db->quote('plugin'));
-          $db->setQuery($query1);
-          $db->execute();
-            
+    /**
+     * Get database instance (avoids depending on component DbHelper during install).
+     *
+     * @return \Joomla\Database\DatabaseInterface
+     */
+    private function getDb()
+    {
+        if (method_exists(Factory::class, 'getContainer')) {
+            return Factory::getContainer()->get(DatabaseInterface::class);
+        }
+        return Factory::getDbo();
     }
 
     /**

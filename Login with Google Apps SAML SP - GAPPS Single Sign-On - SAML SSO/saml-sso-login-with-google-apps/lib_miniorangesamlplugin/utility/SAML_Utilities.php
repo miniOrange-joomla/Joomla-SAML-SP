@@ -16,7 +16,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Version;
 use Joomla\CMS\Router\Route;
-
+include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
 
 $lang = Factory::getLanguage();
 $lang->load('lib_miniorangesamlplugin',JPATH_SITE);
@@ -28,7 +28,7 @@ class SAML_Utilities
 {
     public static function GetPluginVersion()
     {
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $dbQuery = $db->getQuery(true)
             ->select('manifest_cache')
             ->from($db->quoteName('#__extensions'))
@@ -46,7 +46,7 @@ class SAML_Utilities
 
     public static function _get_values_from_table($table_name)
     {
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
         $query->select(array('*'));
         $query->from($db->quoteName($table_name));
@@ -682,7 +682,7 @@ class SAML_Utilities
 
     public static function getSuperUser()
     {
-        $db = Factory::getDBO();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true)->select('user_id')->from('#__user_usergroup_map')->where('group_id=' . $db->quote(8));
         $db->setQuery($query);
         $results = $db->loadColumn();
@@ -953,7 +953,7 @@ class SAML_Utilities
     public static function get_user_from_joomla($matcher, $username, $email)
     {
         //Check if email exist in database
-        $db = Factory::getDBO();
+        $db = MoSamlDbHelper::getDb();
 
         switch ($matcher) {
             case 'username':
@@ -1047,12 +1047,12 @@ class SAML_Utilities
         if (!empty($username)) {
             echo '<div style="margin-bottom:20px;margin-top:20px;"><span style="font-size:14pt;"><strong>Hello</strong>, ' . $username . '</span></div>';
         }
-        echo '<div class="saml-test-container">
-                <table class="saml-test-table">
+        echo '<div class="saml-test-container" style="overflow-x:auto;">
+                <table class="saml-test-table" style="table-layout:fixed;width:100%;">
                     <thead>
                         <tr>
-                            <th>'. Text::_("LIB_MINIORANGESAMLPLUGIN_ATTR_NAME").'</th>
-                            <th>'. Text::_("LIB_MINIORANGESAMLPLUGIN_ATTR_VAL").'</th>
+                            <th style="width:50%;">'. Text::_("LIB_MINIORANGESAMLPLUGIN_ATTR_NAME").'</th>
+                            <th style="width:50%;">'. Text::_("LIB_MINIORANGESAMLPLUGIN_ATTR_VAL").'</th>
                         </tr>
                     </thead>
                     <tbody>';
@@ -1065,8 +1065,8 @@ class SAML_Utilities
                 $rowCount++;
                 $rowClass = ($rowCount % 2 == 0) ? 'background: #f8f9fa;' : 'background: #ffffff;';
                 echo "<tr style='{$rowClass} transition: background-color 0.2s ease;'>
-                        <td style='padding: 18px; border-bottom: 1px solid #e9ecef; font-weight: 500; font-size: 16px;color:rgb(0, 0, 0); vertical-align: top;'>" . $key . "</td>
-                        <td style='padding: 18px; border-bottom: 1px solid #e9ecef; font-size: 16px;color:rgb(0, 0, 0); word-wrap: break-word; vertical-align: top;'>" . implode('<br/>', (array)$value) . "</td>
+                        <td style='padding: 18px; border-bottom: 1px solid #e9ecef; font-weight: 500; font-size: 16px;color:rgb(0, 0, 0); word-break: break-word; overflow-wrap: break-word; max-width: 0; vertical-align: top;'>" . $key . "</td>
+                        <td style='padding: 18px; border-bottom: 1px solid #e9ecef; font-size: 16px;color:rgb(0, 0, 0); word-break: break-word; overflow-wrap: break-word; max-width: 0; vertical-align: top;'>" . implode('<br/>', (array)$value) . "</td>
                       </tr>";
             }
                
@@ -1086,7 +1086,7 @@ class SAML_Utilities
 
     public static function rmex()
     {
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
         $fields = array(
             $db->quoteName('enabled') . ' = '.$db->quote(0),   
@@ -1171,7 +1171,7 @@ class SAML_Utilities
         if (empty($name)) {
             return;
         }
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
 
         $fields = array(
@@ -1187,7 +1187,7 @@ class SAML_Utilities
 
     public static function updateUsernameToSessionId($userID, $username, $sessionId)
     {
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
         $fields = array(
             $db->quoteName('username') . ' = ' . $db->quote($username),
@@ -1205,7 +1205,7 @@ class SAML_Utilities
     }
 
     public static function _load_db_values($table, $load_by, $col_name = '*', $id_name = 'id', $id_value = 1){
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
 
         $query->select($col_name);
@@ -1232,7 +1232,7 @@ class SAML_Utilities
     }
 
     public static function _load_user_db_values($table, $load_by){
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
 
         $query->select('*');
@@ -1252,7 +1252,7 @@ class SAML_Utilities
     }
 
     public static function addColumn(){
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
         $query='ALTER TABLE `#__users` ADD COLUMN `authCount` int(11) DEFAULT 0';
         $db->setQuery($query);
@@ -1263,9 +1263,9 @@ class SAML_Utilities
     public static function _invoke_feedback_form($post, $id)
     {
         self::loadLanguage();
-        $tables = Factory::getDbo()->getTableList();
+        $tables = MoSamlDbHelper::getDb()->getTableList();
         $result = SAML_Utilities::_load_db_values('#__extensions', 'loadColumn', 'extension_id', 'element', 'com_miniorange_saml');
-        $tables = Factory::getDbo()->getTableList();
+        $tables = MoSamlDbHelper::getDb()->getTableList();
         $tab = 0;
         foreach ($tables as $table) {
             if (strpos($table, "miniorange_saml_config"))
@@ -1375,7 +1375,7 @@ class SAML_Utilities
 
     public static function generic_update_query($database_name, $updatefieldsarray){
 
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
 
         $query = $db->getQuery(true);
         foreach ($updatefieldsarray as $key => $value)

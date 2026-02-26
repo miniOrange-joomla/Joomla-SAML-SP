@@ -19,13 +19,13 @@ use Joomla\CMS\User\User;
 use Joomla\CMS\User\UserHelper;
 use Joomla\CMS\String\PunycodeHelper;
 use Joomla\CMS\Installer\Installer;
-
 $lang = Factory::getLanguage();
 $lang->load('plg_system_samlredirect',JPATH_ADMINISTRATOR);
 
 jimport('miniorangesamlplugin.utility.SAML_Utilities');
 include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo-saml-utility.php';
 include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'saml_handler.php';
+include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
 /**
  * miniOrange SAML System plugin
  */
@@ -170,9 +170,13 @@ class plgSystemSamlredirect extends CMSPlugin
                         $type = $results;
                     }
     
+                    
                     if ($type) {
                         $installer = new Installer();
-                        $installer->setDatabase(Factory::getDbo());
+                        // setDatabase() exists only in Joomla 4+; Joomla 3 uses application DBO
+                        if (method_exists($installer, 'setDatabase')) {
+                            $installer->setDatabase(MoSamlDbHelper::getDb());
+                        }
                         $installer->uninstall($type, $identifier);
                     }
                 }
@@ -245,7 +249,16 @@ class plgSystemSamlredirect extends CMSPlugin
                         if ($results == $id) {?>
                           <link rel="stylesheet" type="text/css" href="<?php echo Uri::base();?>/components/com_miniorange_saml/assets/css/mo_saml_style.css" />
                             <div class="form-style-6 " style="width:35% !important; margin-left:33%; margin-top: 4%;">
-                                <h1> <?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_14');?></h1>
+                                <form name="f" method="post" action="" id="mojspfree_feedback_form_close" style="display:inline;">
+                                       <h1><?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_14');?> 
+                                    <input type="hidden" name="mojspfree_skip_feedback" value="mojspfree_skip_feedback"/>
+                                    <button type="button" class="mojsp-close-btn" onClick="skipSAMLSPForm()" title="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_SKIP_BTN'); ?>" aria-label="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_SKIP_BTN'); ?>" style="cursor:pointer;font-size:36px;color:#fff;margin-left:6px;background:none;border:none;padding:0;line-height:1;display:inline-flex;align-items:center;">&times;</button>
+                                    <?php
+                                        foreach ($tpostData['cid'] as $key) { ?>
+                                            <input type="hidden" name="result[]" value=<?php echo $key ?>>
+                                        <?php }
+                                    ?>
+                                </h1></form>
                                 <form name="f" method="post" action="" id="mojsp_feedback" style="background: #f3f1f1; padding: 10px;">
                                     <h3><?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_15');?> </h3>
                                     <input type="hidden" name="mojsp_feedback" value="mojsp_feedback"/>
@@ -271,7 +284,7 @@ class plgSystemSamlredirect extends CMSPlugin
                                         <?php } ?>
                                         <br>
 
-                                        <textarea id="query_feedback" name="query_feedback" rows="4" style="margin-left:3%;width: 100%" cols="50" placeholder="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_WRITE_QUERY'); ?>"></textarea><br><br><br>
+                                        <textarea id="query_feedback" name="query_feedback" rows="4" style="margin-left:3%;width: 100%" cols="50" minlength="10" placeholder="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_WRITE_QUERY'); ?>" title="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_WRITE_QUERY'); ?> (min 10 characters)"></textarea><br><br><br>
                                         <tr>
                                             <td width="20%"><strong><?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_EMAIL'); ?><span style="color: #ff0000;">*</span>:</strong></td>
                                             <td><input type="email" name="feedback_email" required value="<?php echo $feedback_email; ?>" placeholder="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_ENTER_EMAIL'); ?>" style="width:80%"/></td>
@@ -287,37 +300,27 @@ class plgSystemSamlredirect extends CMSPlugin
                                         </div>
                                     </div>
                                 </form>
-                                <form name="f" method="post" action="" id="mojspfree_feedback_form_close">
-                                    <input type="hidden" name="mojspfree_skip_feedback" value="mojspfree_skip_feedback"/>
-                                    <div style="text-align:center">
-                                        <button class="button button-primary button-large" onClick="skipSAMLSPForm()"><?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_SKIP_BTN'); ?></button>
-                                    </div>
-                                    <?php
-                                        foreach ($tpostData['cid'] as $key) { ?>
-                                            <input type="hidden" name="result[]" value=<?php echo $key ?>>
-                                        <?php }
-                                    ?>
-                                </form>
+                             
                             </div>
                             <script src="https://code.jquery.com/jquery-3.6.3.js"></script>
                             <script>
                                 jQuery('input:radio[name="deactivate_plugin"]').click(function () {
                                     var reason = jQuery(this).val();
-                                    jQuery('#query_feedback').removeAttr('required')
+                                    jQuery('#query_feedback').removeAttr('required');
                                     if (reason === '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_1'); ?>') {
                                         jQuery('#query_feedback').attr("placeholder",'<?php echo  Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_8'); ?>');
                                     } else if (reason === '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_2'); ?>') {
                                         jQuery('#query_feedback').attr("placeholder", '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_10'); ?>');
                                     } else if (reason === '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_4'); ?>'){
                                         jQuery('#query_feedback').attr("placeholder", '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_11'); ?>');
-                                    }else if (reason === '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_6'); ?>'){
+                                    } else if (reason === '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_6'); ?>'){
                                         jQuery('#query_feedback').attr("placeholder", '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_9'); ?>');
                                     } else if (reason === '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_7'); ?>' || reason === '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_5'); ?>' ) {
                                         jQuery('#query_feedback').attr("placeholder", '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_12'); ?>');
-                                        jQuery('#query_feedback').prop('required', true);
                                     } else if (reason === '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_3'); ?>') {
                                         jQuery('#query_feedback').attr("placeholder", '<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_13'); ?>');
                                     }
+                                    jQuery('#query_feedback').prop('required', true).attr('minlength', 10);
                                 });
 
                                 function skipSAMLSPForm(){
@@ -709,7 +712,7 @@ class plgSystemSamlredirect extends CMSPlugin
                 }
             }
     
-            $db = Factory::getDbo();
+            $db = MoSamlDbHelper::getDb();
             $appdata = new Mo_saml_Local_Util();
             $appdata = $appdata->_load_db_values('#__miniorange_saml_config');
             $uid=SAML_Utilities::getSuperUser();

@@ -11,6 +11,8 @@
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\Factory;
+use Joomla\Database\DatabaseInterface;
+
 class plgAuthenticationMiniorangesamlInstallerScript
 {
     /**
@@ -20,18 +22,28 @@ class plgAuthenticationMiniorangesamlInstallerScript
      *
      * @return void
      */
-    public function install($parent) 
+    public function install($parent)
     {
-
-          $db  = Factory::getDbo();
-          $query = $db->getQuery(true);
-          $query->update('#__extensions');
-          $query->set($db->quoteName('enabled') . ' = 1');
-          $query->where($db->quoteName('element') . ' = ' . $db->quote('miniorangesaml'));
-          $query->where($db->quoteName('type') . ' = ' . $db->quote('plugin'));
-          $db->setQuery($query);
-          $db->execute();
-            
+        $db = $this->getDb();
+        $query = $db->getQuery(true);
+        $query->update('#__extensions');
+        $query->set($db->quoteName('enabled') . ' = 1');
+        $query->where($db->quoteName('element') . ' = ' . $db->quote('miniorangesaml'));
+        $query->where($db->quoteName('type') . ' = ' . $db->quote('plugin'));
+        $db->setQuery($query);
+        $db->execute();
     }
 
+    /**
+     * Get database instance (avoids depending on component DbHelper during install).
+     *
+     * @return \Joomla\Database\DatabaseInterface
+     */
+    private function getDb()
+    {
+        if (method_exists(Factory::class, 'getContainer')) {
+            return Factory::getContainer()->get(DatabaseInterface::class);
+        }
+        return Factory::getDbo();
+    }
 }

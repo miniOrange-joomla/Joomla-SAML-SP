@@ -21,6 +21,7 @@ HTMLHelper::_('jquery.framework');
 
 $document = Factory::getApplication()->getDocument();
 $document->addScript(Uri::base() . 'components/com_miniorange_saml/assets/js/samlUtility.js');
+$document->addScript(Uri::base() . 'components/com_miniorange_saml/assets/js/mo-saml-countries.js');
 $document->addScript(Uri::base() . 'components/com_miniorange_saml/assets/js/bootstrap-select-min.js');
 $document->addScript(Uri::base() . 'components/com_miniorange_saml/assets/js/idp-settings.js');
 
@@ -207,18 +208,9 @@ if ($test_config) {
         <div id="attribute-mapping"
             class="tab-pane <?php echo ($saml_active_tab === 'attribute_mapping') ? 'active' : ''; ?>">
             <div class="mo_boot_row">
-                <?php if (isset($get['id'])) { ?>
-
-                    <?php attribute_mapping($get['id']); ?>
-
-                <?php } else { ?>
-
-                    <?php identity_provider_mapping(); ?>
-
-                <?php } ?>
+                <?php attribute_mapping(); ?>
             </div>
         </div>
-
 
         <div id="licensing-plans" class="tab-pane <?php echo ($saml_active_tab === 'licensing') ? 'active' : ''; ?>">
             <div class="mo_boot_row">
@@ -2899,6 +2891,15 @@ function mo_saml_local_support()
     $admin_phone = isset($result['admin_phone']) ? $result['admin_phone'] : '';
     if ($admin_email == '')
         $admin_email = $current_user->email;
+
+    $query_phone_code = '';
+    $query_phone_number = '';
+    if (!empty($admin_phone) && preg_match('/^\+(\d{1,4})\s*(.*)$/', trim($admin_phone), $m)) {
+        $query_phone_code = '+' . $m[1];
+        $query_phone_number = isset($m[2]) ? trim($m[2]) : '';
+    } elseif (!empty($admin_phone)) {
+        $query_phone_number = trim($admin_phone);
+    }
     ?>
  
 
@@ -2934,9 +2935,11 @@ function mo_saml_local_support()
                 <div class="mo_boot_row">
                     <div class="mo_boot_col-sm-12">
                         <div class="mo_boot_p-4 mo_saml_mini_section">
-                            <form name="f" method="post"
+                            <form name="f" method="post" id="mo_saml_contact_us_form"
                                 action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.contactUs'); ?>">
                                 <input type="hidden" name="option1" value="mo_saml_login_send_query" />
+                                <input type="hidden" name="client_timezone" id="mo_saml_client_timezone" value="" />
+                                <input type="hidden" name="client_timezone_offset" id="mo_saml_client_timezone_offset" value="" />
 
                                 <div class="mo_boot_row mo_boot_mb-4">
                                     <div class="mo_boot_col-sm-3 offset-1">
@@ -2955,12 +2958,18 @@ function mo_saml_local_support()
                                     <div class="mo_boot_col-sm-3 offset-1">
                                         <strong><?php echo Text::_('COM_MINIORANGE_SAML_SUPPORT_NUMBER'); ?> :</strong>
                                     </div>
-                                    <div class="mo_boot_col-sm-6">
-                                        <input type="text" class="mo_saml_table_textbox mo-form-control mo_saml_proxy_setup"
+                                    <div class="mo_boot_col-sm-6 mo_boot_d-flex mo_boot_flex-wrap" style="gap: 8px;">
+                                        <div class="mo_saml_phone_code_wrapper mo_saml_table_textbox mo-form-control mo_saml_proxy_setup" style="position: relative; max-width: 180px; flex-shrink: 0;" data-initial-code="<?php echo htmlspecialchars($query_phone_code); ?>" data-placeholder="<?php echo htmlspecialchars(Text::_('COM_MINIORANGE_SAML_SELECT_COUNTRY_CODE')); ?>">
+                                            <input type="hidden" name="query_phone_code" value="<?php echo htmlspecialchars($query_phone_code); ?>">
+                                            <div class="mo_saml_code_display mo_saml_cursor_pointer"><?php echo $query_phone_code !== '' ? htmlspecialchars($query_phone_code) : htmlspecialchars(Text::_('COM_MINIORANGE_SAML_SELECT_COUNTRY_CODE')); ?></div>
+                                            <span class="mo_saml_country_code_arrow">&#9662;</span>
+                                            <div class="mo_saml_code_list mo_saml_country_code_list"></div>
+                                        </div>
+                                        <input type="text" class="mo_saml_table_textbox mo-form-control mo_saml_proxy_setup" style="flex: 1; min-width: 120px;"
                                             name="query_phone"
-                                            pattern="[\+]\d{11,14}|[\+]\d{1,4}([\s]{0,1})(\d{0}|\d{9,10})"
-                                            value="<?php echo $admin_phone; ?>"
-                                            placeholder="<?php echo Text::_('COM_MINIORANGE_SAML_PHONE_PLACEHOLDER'); ?>" />
+                                            pattern="\d{6,14}"
+                                            value="<?php echo htmlspecialchars($query_phone_number); ?>"
+                                            placeholder="<?php echo Text::_('COM_MINIORANGE_SAML_PHONE_NUMBER_PLACEHOLDER'); ?>" />
                                     </div>
                                 </div>
 
@@ -3198,16 +3207,21 @@ function identity_provider_settings()
         <div class="mo_boot_row mo_boot_p-2">
             <div class="mo_boot_col-sm-12 mo_boot_px-2">
                 <div class="mo_boot_row mo_boot_mb-4">
-                    <div class="mo_boot_col-sm-10">
+                    <div class="mo_boot_col-sm-7">
                         <h3 class="mo_saml_form_heading">
                             <?php echo Text::_('COM_MINIORANGE_SAML_IDENTITY_PROVIDER_SETTINGS'); ?>
                         </h3>
                     </div>
-                    <div class="mo_boot_col-sm-2 mo_saml_btn_end">
+                   
+                    <div class="mo_boot_col-sm-5 mo_saml_btn_end">
                         <?php
                         $idp_configured = !empty($attribute['idp_entity_id']) && !empty($attribute['single_signon_service_url']);
                         if ($idp_configured) {
                             ?>
+                             <a href="https://plugins.miniorange.com/joomla-sso-ldap-mfa-solutions?section=saml-sp"
+                                target="_blank" class="mo_boot_btn btn_cstm mo_boot_mx-xl-4">
+                                <?php echo Text::_('COM_MINIORANGE_SAML_GUIDES'); ?>
+                            </a>
                             <button class="mo_boot_btn btn_cstm mo_saml_block_cursor" disabled
                                 title="Upgrade to Premium to add multiple IDPs">
                                 <i class="fa fa-lock"></i> <?php echo Text::_('COM_MINIORANGE_SAML_ADD_NEW_IDP'); ?>
@@ -3216,6 +3230,10 @@ function identity_provider_settings()
                                                 src="<?php echo Uri::base(); ?>/components/com_miniorange_saml/assets/images/crown.webp"></a></strong></sup>
                             </button>
                         <?php } else { ?>
+                            <a href="https://plugins.miniorange.com/joomla-sso-ldap-mfa-solutions?section=saml-sp"
+                                target="_blank" class="mo_boot_btn btn_cstm mo_boot_mx-xl-4">
+                                <?php echo Text::_('COM_MINIORANGE_SAML_GUIDES'); ?>
+                            </a>
                             <a href="<?php echo Route::_('index.php?option=com_miniorange_saml&tab=idp&id=new'); ?>"
                                 class="mo_boot_btn btn_cstm">
                                 <i class="fa fa-plus"></i> <?php echo Text::_('COM_MINIORANGE_SAML_ADD_NEW_IDP'); ?>
@@ -3323,14 +3341,14 @@ function identity_provider_settings()
                     </div>
                 </div>
 
+
                 <div class="mo_boot_row mo_boot_mt-4">
                     <div class="mo_boot_col-sm-12">
                         <div class="mo_boot_row">
                             <div class="mo_boot_col-sm-10">
-                                <p><?php echo Text::_('COM_MINIORANGE_SAML_SWITCHING_ENVIRONMENTS'); ?></p>
-                                <p><?php echo Text::_('COM_MINIORANGE_SAML_IMPORT_EXPORT_CONFIG_HERE'); ?></p>
+                                <p><?php echo Text::_('COM_MINIORANGE_SAML_SWITCHING_ENVIRONMENTS'); ?> &nbsp; <?php echo Text::_('COM_MINIORANGE_SAML_IMPORT_EXPORT_CONFIG_HERE'); ?></p>
                             </div>
-                            <div class="mo_boot_col-sm-2 text-right">
+                            <div class="mo_boot_col-sm-2 mo_saml_btn_end">
                                 <button class="mo_boot_btn btn_cstm" onclick="showImportExportConfig()">
                                     <?php echo Text::_('COM_MINIORANGE_SAML_IMPORT_EXPORT'); ?>
                                 </button>
@@ -3354,15 +3372,13 @@ function import_export_configuration()
         <div class="mo_boot_row mo_boot_p-2">
             <div class="mo_boot_col-sm-12 mo_boot_px-2">
                 <div class="mo_boot_row mo_boot_mb-4">
-                    <div class="mo_boot_col-sm-10">
+                    <div class="mo_boot_col-sm-11">
                         <h3 class="mo_saml_form_heading"><?php echo Text::_('COM_MINIORANGE_SAML_IMPORT_EXPORT_CONFIG'); ?>
                         </h3>
                     </div>
-                    <div class="mo_boot_col-sm-4 text-right">
-                        <button class="mo_boot_col-sm-1 mo_boot_offset-sm-4 mo_saml_toggle_btn_black" onclick="backToIdpList()" id="back_to_idp_list">
-                            <i class="fa fa-arrow-left"></i>
-                        </button>
-                    </div>
+                    <button class="mo_saml_toggle_btn_black mo_saml_btn_end" onclick="backToIdpList()" id="back_to_idp_list">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
                 </div>
 
                 <div class="mo_boot_row mo_boot_mb-4">
