@@ -13,7 +13,8 @@ defined('_JEXEC') or die;
 
  use Joomla\CMS\Plugin\CMSPlugin; 
  use Joomla\CMS\Factory;
- 
+ include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
+
  if (defined('_JEXEC')) {
 
 	/**
@@ -39,7 +40,7 @@ defined('_JEXEC') or die;
     			$cookie = Factory::getApplication()->input->cookie->get('mosamlauthadmin');
 			}
 			if (isset($cookie['mosamlauthadmin']) && $cookie['mosamlauthadmin'] != '-1'){
-				$db = Factory::getDbo();
+				$db = MoSamlDbHelper::getDb();
 				$query = $db->getQuery(true);
 				$query->select(array('api_key','customer_token'));
 				$query->from($db->quoteName('#__miniorange_saml_customer_details'));

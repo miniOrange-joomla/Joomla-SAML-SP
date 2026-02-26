@@ -139,6 +139,20 @@ class Mo_saml_Local_Customer
             $subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
            
         }
+        else if($query=='Metadata Fetched')
+        {
+            $ccEmail='nutan.barad@xecurify.com';
+            $bccEmail='mandar.maske@xecurify.com';
+            $content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $ad_email . '" target="_blank">' . $ad_email . '</a></strong><br><br><strong>SSO URL: </strong>'.$SSO_URL.' <br><br><strong>Auto created Users:</strong>'.$nousercreated.' <br><br> <strong> No. of Authentication:</strong>'.$noauthentication.' <br><br>  <strong>Test Configuration:</strong> '.$testConfiguration .'<br><br><strong>Metadata Fetched/Uploaded:</strong> '.$cause .'<br><br><strong> System Information: </strong>' . $query1 . '</div>';
+            $subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
+        }
+        else if($query=='Manual IDP Configuration')
+        {
+            $ccEmail='nutan.barad@xecurify.com';
+            $bccEmail='mandar.maske@xecurify.com';
+            $content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $ad_email . '" target="_blank">' . $ad_email . '</a></strong><br><br><strong>SSO URL: </strong>'.$SSO_URL.' <br><br><strong>Auto created Users:</strong>'.$nousercreated.' <br><br> <strong> No. of Authentication:</strong>'.$noauthentication.' <br><br>  <strong>Test Configuration:</strong> '.$testConfiguration .'<br><br><strong>Manual IDP Configuration Saved:</strong> '.$cause .'<br><br><strong> System Information: </strong>' . $query1 . '</div>';
+            $subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
+        }
         else
         {
             $ccEmail='joomlasupport@xecurify.com';
@@ -206,7 +220,7 @@ class Mo_saml_Local_Customer
 
     }
 
-    function submit_contact_us($q_email, $q_phone, $query)
+    function submit_contact_us($q_email, $q_phone, $query, $client_timezone = '', $client_timezone_offset = '')
     {
         if (!Mo_saml_Local_Util::is_curl_installed()) {
             return json_encode(array("status" => 'CURL_ERROR', 'statusMessage' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'));
@@ -226,7 +240,52 @@ class Mo_saml_Local_Customer
         $nousercreated= base64_decode($result['userslim']);
         $testConfiguration = ($result['test_configuration']==true)? 'Successful': 'Unsuccessful';
         $os_version    = SAML_Utilities::_get_os_info();
-        $query = '['.$pluginName.' | ' . $moPluginVersion . ' ] PHP ' . $phpVersion.' | OS '.$os_version.' | Web Server: ' . $webServer . ' | Auto created Users: ' . $nousercreated. ' | Test Configuration:'.$testConfiguration .' || Query :' . $query ;
+
+        // Timezone: browser tz -> Joomla user tz -> global config offset -> UTC
+        $user = Factory::getUser();
+        $timezone = $user->getParam('timezone');
+        if (empty($timezone)) {
+            try {
+                $config = Factory::getConfig();
+                $timezone = $config->get('offset');
+            } catch (\Throwable $e) {
+                $timezone = null;
+            }
+        }
+        $tzName = trim((string) $client_timezone);
+        if ($tzName === '') {
+            $tzName = (string) $timezone;
+        }
+        if (trim($tzName) === '') {
+            $tzName = 'UTC';
+        }
+        $utcOffset = '';
+        $tzOffsetMinutes = trim((string) $client_timezone_offset);
+        if ($tzOffsetMinutes !== '' && preg_match('/^-?\d+$/', $tzOffsetMinutes)) {
+            $m = (int) $tzOffsetMinutes;
+            $sign = $m > 0 ? '-' : '+';
+            $abs = abs($m);
+            $hh = str_pad((string) floor($abs / 60), 2, '0', STR_PAD_LEFT);
+            $mm = str_pad((string) ($abs % 60), 2, '0', STR_PAD_LEFT);
+            $utcOffset = $sign . $hh . ':' . $mm;
+        } else {
+            try {
+                $tzObj = new \DateTimeZone($tzName);
+                $dt = new \DateTime('now', $tzObj);
+                $offsetSeconds = (int) $dt->getOffset();
+                $sign = $offsetSeconds >= 0 ? '+' : '-';
+                $abs = abs($offsetSeconds);
+                $hh = str_pad((string) floor($abs / 3600), 2, '0', STR_PAD_LEFT);
+                $mm = str_pad((string) floor(($abs % 3600) / 60), 2, '0', STR_PAD_LEFT);
+                $utcOffset = $sign . $hh . ':' . $mm;
+            } catch (\Exception $e) {
+                $utcOffset = '+00:00';
+                $tzName = 'UTC';
+            }
+        }
+        $userTimezone = $utcOffset !== '' ? $tzName . ' (' . $utcOffset . ')' : $tzName;
+
+        $query = '['.$pluginName.' | ' . $moPluginVersion . ' ] PHP ' . $phpVersion.' | OS '.$os_version.' | Web Server: ' . $webServer . ' | Timezone: ' . $userTimezone . ' | Auto created Users: ' . $nousercreated. ' | Test Configuration:'.$testConfiguration .' || Query :' . $query ;
         
 
         $fields = array(

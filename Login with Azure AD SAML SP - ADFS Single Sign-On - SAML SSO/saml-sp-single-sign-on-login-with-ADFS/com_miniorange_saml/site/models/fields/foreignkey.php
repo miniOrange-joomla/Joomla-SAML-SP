@@ -13,7 +13,7 @@ defined('JPATH_BASE') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\FormField;
 use Joomla\CMS\HTML\HTMLHelper;
-
+include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
 /**
  * Supports a value from an external table
  *
@@ -63,7 +63,7 @@ class JFormFieldForeignKey extends FormField
 		$html = '';
 
 		// Load all the field options
-		$db    = Factory::getDbo();
+		$db    = MoSamlDbHelper::getDb();
 		$query = $db->getQuery(true);
 
 		$query
