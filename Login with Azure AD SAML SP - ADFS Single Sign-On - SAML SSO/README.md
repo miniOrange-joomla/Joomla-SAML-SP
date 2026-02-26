@@ -12,6 +12,33 @@ Simplify authentication on your Joomla site with **ADFS SAML Single Sign-On (SSO
 
 ---
 
+## Installation
+
+Download the latest installable package:
+
+**[Download Joomla SAML SP – Login with ADFS Latest Version](https://prod-marketing-site.s3.amazonaws.com/plugins/joomla/saml-sp-single-sign-on-login-with-ADFS.zip)**
+
+OR
+
+Go to **Releases → saml-sp-single-sign-on-login-with-ADFS.zip**
+
+---
+
+## Quick Setup:
+1. Login to Joomla Administrator  
+   `https://your-site.com/administrator`
+
+2. Go to **Extensions → Manage → Install**
+
+3. Upload the zip – ***saml-sp-single-sign-on-login-with-ADFS.zip***  
+   OR search for the **SAML SP Login With ADFS Plugin** and install it.
+
+4. Once installation is successful, click ***Get Started***
+
+5. Configure the plugin using the **[Setup Guide](https://plugins.miniorange.com/guide-joomla-single-sign-sso-using-adfs-idp)**
+
+---
+
 ## Free Version Features:
 - **IDP Credential Login**:  
   Secure login using SAML 2.0–compliant Identity Provider (IDP) credentials.
@@ -60,13 +87,6 @@ Simplify authentication on your Joomla site with **ADFS SAML Single Sign-On (SSO
 
 ---
 
-## Get Started:
-1. Go to **Extensions → Manage → Install**  
-2. Search for **"ADFS SAML SSO"** and install the plugin  
-3. Configure via **Component → ADFS SAML SSO → Plugin Setup**
-
----
-
 ## Dependencies:
 - **NONE**
 
@@ -80,3 +100,6 @@ Secure your Joomla site today!
 
 ## Website:
 Explore more Joomla plugins at: **https://plugins.miniorange.com**
+
+![GitHub Downloads](https://img.shields.io/github/downloads/miniOrange-joomla/Joomla-SAML-SP/total?cacheSeconds=60)
+<img src="https://komarev.com/ghpvc/?username=miniOrange-joomla&label=Repo%20Views&color=0e75b6&style=flat" />
