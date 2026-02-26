@@ -26,7 +26,7 @@ Go to **Releases → saml-sso-login-with-google-apps.zip**
 
 ## Quick Setup:
 1. Login to Joomla Administrator  
-   `https://your-site.com/administrator`
+   `https://your-site.com/administrator`   
 
 2. Go to **Extensions → Manage → Install**
 
@@ -110,3 +110,5 @@ Explore all Joomla plugins at: **https://plugins.miniorange.com**
 
 ![GitHub Downloads](https://img.shields.io/github/downloads/miniOrange-joomla/Joomla-SAML-SP/total?cacheSeconds=60)
 <img src="https://komarev.com/ghpvc/?username=miniOrange-joomla&label=Repo%20Views&color=0e75b6&style=flat" />
+
+
