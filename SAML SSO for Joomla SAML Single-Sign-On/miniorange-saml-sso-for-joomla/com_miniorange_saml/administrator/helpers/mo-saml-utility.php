@@ -11,7 +11,7 @@
 
 defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
-
+include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
 /**
 This class contains all the utility functions
 
@@ -32,7 +32,7 @@ class Mo_saml_Local_Util{
 
     public static function GetPluginVersion()
     {
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $dbQuery = $db->getQuery(true)
         ->select('manifest_cache')
         ->from($db->quoteName('#__extensions'))
@@ -56,7 +56,7 @@ class Mo_saml_Local_Util{
     }
 
     public function _load_db_values($table){
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
         $query->select('*');
         $query->from($db->quoteName($table));
@@ -68,7 +68,7 @@ class Mo_saml_Local_Util{
 
     public static function generic_update_query($database_name, $updatefieldsarray)
     {
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
         // Check if an entry with id = 1 exists
         $query->select('COUNT(*)')
@@ -105,7 +105,7 @@ class Mo_saml_Local_Util{
     
 
     public static function loadDBValues($table, $load_by, $col_name = '*', $id_name = 'id', $id_value = 1){
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
 
         $query->select($col_name);

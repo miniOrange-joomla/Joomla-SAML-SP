@@ -16,7 +16,7 @@ Enhance your Joomla site's security with **Joomla SAML Single Sign-On (SSO)**. T
 
 Download the latest installable package:
 
-**[Download Joomla SAML SP – Login with ADFS Latest Version](https://prod-marketing-site.s3.amazonaws.com/plugins/joomla/saml-sso-login-with-google-apps.zip)**
+**[Download Joomla SAML SP – Login with Google Apps Latest Version](https://prod-marketing-site.s3.amazonaws.com/plugins/joomla/saml-sso-login-with-google-apps.zip)**
 
 OR
 

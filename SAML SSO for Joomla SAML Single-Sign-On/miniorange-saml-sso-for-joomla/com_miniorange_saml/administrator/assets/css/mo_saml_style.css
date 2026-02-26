@@ -2383,6 +2383,12 @@ input.form-control:disabled {
         color: #FFFFFF;
     }
 
+    .mo_saml_country_code_list {
+        background-color: #0f151d;
+        color: #ffffff;
+        border: 1px solid #ffffff;
+    }
+
     .mo_saml_file_upload_btn {
 
         border: 1px solid #ffffff;
@@ -2942,4 +2948,28 @@ input.form-control:disabled {
 
 .mo_saml_text_deco{
     text-decoration: none !important;
+}
+
+
+.mo_saml_country_code_list {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 10;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-top: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.mo_saml_country_code_arrow {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
 }

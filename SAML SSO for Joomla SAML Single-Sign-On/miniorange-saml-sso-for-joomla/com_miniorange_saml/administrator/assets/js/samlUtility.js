@@ -549,3 +549,27 @@ function changeSubMenuSupport(tabPanelId, element0, element1) {
     // Show the selected div
     jQuery(element1).css('display', 'block');
 }
+
+// Contact form: set browser timezone into hidden fields (name + offset)
+function moSamlSetBrowserTimezone() {
+    try {
+        var tzName = (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
+        var offset = new Date().getTimezoneOffset();
+        var elTz = document.getElementById('mo_saml_client_timezone');
+        var elOff = document.getElementById('mo_saml_client_timezone_offset');
+        if (elTz) elTz.value = tzName;
+        if (elOff) elOff.value = String(offset);
+    } catch (e) {}
+}
+function moSamlInitContactFormTimezone() {
+    var form = document.getElementById('mo_saml_contact_us_form');
+    if (form) {
+        moSamlSetBrowserTimezone();
+        form.addEventListener('submit', moSamlSetBrowserTimezone);
+    }
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', moSamlInitContactFormTimezone);
+} else {
+    moSamlInitContactFormTimezone();
+}

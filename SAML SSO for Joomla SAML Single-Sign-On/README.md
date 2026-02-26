@@ -11,6 +11,33 @@ Elevate your Joomla site's security and authentication with **Joomla SAML Single
   Works seamlessly with **Joomla 3, 4, and 5**.
 - **Enhanced Security**:  
   Provides **encrypted and signed SAML responses** for secure authentication.
+  
+---
+
+## Installation
+
+Download the latest installable package:
+
+**[Download Joomla SAML SP Latest Version](https://prod-marketing-site.s3.amazonaws.com/plugins/joomla/miniorange-saml-sso-for-joomla.zip)**
+
+OR
+
+Go to **Releases → miniorange-saml-sso-for-joomla.zip**
+
+---
+
+## Quick Setup:
+1. Login to Joomla Administrator  
+   `https://your-site.com/administrator`
+
+2. Go to **Extensions → Manage → Install**
+
+3. Upload the zip – ***miniorange-saml-sso-for-joomla.zip***  
+   OR search for the **SAML SP SSO** and install it.
+
+4. Once installation is successful, click ***Get Started***
+
+5. Configure the plugin using the **[Setup Guide](https://plugins.miniorange.com/step-by-step-guide-for-joomla-single-sign-on-sso)**
 
 ---
 
@@ -59,14 +86,6 @@ Elevate your Joomla site's security and authentication with **Joomla SAML Single
 
 ---
 
-## Quick Setup:
-1. Go to **Extensions → Manage → Install**.
-2. Search for **"miniOrange SAML SP"** and install the plugin.
-3. Configure via  
-   **Component → miniOrange SAML SP → Service Provider Setup**.
-
----
-
 ## Dependencies:
 - **NONE**
 
@@ -80,3 +99,6 @@ Streamline authentication today!
 
 ## Website:
 Explore all Joomla plugins at: **https://plugins.miniorange.com**
+
+![GitHub Downloads](https://img.shields.io/github/downloads/miniOrange-joomla/Joomla-SAML-SP/total?cacheSeconds=60)
+<img src="https://komarev.com/ghpvc/?username=miniOrange-joomla&label=Repo%20Views&color=0e75b6&style=flat" />

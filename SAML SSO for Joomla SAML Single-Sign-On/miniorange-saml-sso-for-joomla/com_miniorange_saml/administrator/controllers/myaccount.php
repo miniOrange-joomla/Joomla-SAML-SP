@@ -19,7 +19,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Uri\Uri;
 jimport('joomla.filesystem.file');
-
+include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
 
 /**
  * Myaccount controller class.
@@ -94,7 +94,7 @@ class Miniorange_samlControllerMyaccount extends FormController
             return;
         }
         if (isset($post['idp_id']) && $post['idp_id'] > 0) {
-            $db = Factory::getDbo();
+            $db = MoSamlDbHelper::getDb();
 
             $query = $db->getQuery(true);
 
@@ -228,18 +228,24 @@ class Miniorange_samlControllerMyaccount extends FormController
                     ),
                 );
                 if (empty($url)) {
-                    $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', Text::_('COM_MINIORANGE_SAML_MSG_J'), 'error');
+                    $cause = Text::_('COM_MINIORANGE_SAML_MSG_J');
+                    SAML_Utilities::keepRecords('Metadata Fetched', $cause);
+                    $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $cause, 'error');
                     return;
                 } else {
                     $file = file_get_contents($url, false, stream_context_create($arrContextOptions));
                     if ($file === false || empty($file)) {
-                        $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp&id=1', Text::_('COM_MINIORANGE_SAML_MSG_INVALID_METADATA'), 'error');
+                        $cause = Text::_('COM_MINIORANGE_SAML_MSG_INVALID_METADATA');
+                        SAML_Utilities::keepRecords('Metadata Fetched', $cause);
+                        $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp&id=1', $cause, 'error');
                         return;
                     }
                 }
             }
             $this->upload_metadata($file, $idp_name);
         } else {
+            $cause = Text::_('COM_MINIORANGE_SAML_MSG_J');
+            SAML_Utilities::keepRecords('Metadata Fetched', $cause);
             $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp');
             return;
         }
@@ -248,7 +254,9 @@ class Miniorange_samlControllerMyaccount extends FormController
     function upload_metadata($file, $idp_name)
     {
         if (empty($file)) {
-            $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', Text::_('COM_MINIORANGE_SAML_MSG_NO_METADATA_CONTENT'), 'error');
+            $cause = Text::_('COM_MINIORANGE_SAML_MSG_NO_METADATA_CONTENT');
+            SAML_Utilities::keepRecords('Metadata Fetched', $cause);
+            $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $cause, 'error');
             return;
         }
 
@@ -261,7 +269,9 @@ class Miniorange_samlControllerMyaccount extends FormController
             $identity_providers = $metadata->getIdentityProviders();
 
             if (empty($identity_providers)) {
-                $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', Text::_('COM_MINIORANGE_SAML_MSG_K'), 'error');
+                $cause = Text::_('COM_MINIORANGE_SAML_MSG_K');
+                SAML_Utilities::keepRecords('Metadata Fetched', $cause);
+                $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $cause, 'error');
                 return;
             }
             foreach ($identity_providers as $key => $idp) {
@@ -282,6 +292,8 @@ class Miniorange_samlControllerMyaccount extends FormController
                 $result->generic_update_query($database_name, $updatefieldsarray);
                 break;
             }
+            $cause = Text::_('COM_MINIORANGE_SAML_MSG_TEST');
+            SAML_Utilities::keepRecords('Metadata Fetched', $cause);
             $isAdmintoolsSystemEnabled = PluginHelper::isEnabled('system', 'admintools');
             $customer = new Mo_saml_Local_Util();
             $configuration = $customer->_load_db_values('#__miniorange_saml_config');
@@ -293,7 +305,9 @@ class Miniorange_samlControllerMyaccount extends FormController
             $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', Text::sprintf('COM_MINIORANGE_SAML_MSG_TEST', $test));
             return;
         } else {
-            $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', Text::_('COM_MINIORANGE_SAML_MSG_K'), 'error');
+            $cause = Text::_('COM_MINIORANGE_SAML_MSG_K');
+            SAML_Utilities::keepRecords('Metadata Fetched', $cause);
+            $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $cause, 'error');
             return;
         }
     }
@@ -386,7 +400,7 @@ class Miniorange_samlControllerMyaccount extends FormController
         } else {
             $post = Factory::getApplication()->input->post->getArray();
         }
-        $db = Factory::getDbo();
+        $db = MoSamlDbHelper::getDb();
         $query = $db->getQuery(true);
         $fields = array(
             $db->quoteName('email') . ' = ' . $db->quote($post['admin_email']),
@@ -492,17 +506,20 @@ class Miniorange_samlControllerMyaccount extends FormController
                         $certificate = SAML_Utilities::sanitize_certificate($file_cert);
                         if (!@openssl_x509_read($certificate)) {
                             $message = Text::_('COM_MINIORANGE_SAML_MSG_R');
+                            SAML_Utilities::keepRecords('Manual IDP Configuration', $message);
                             $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $message, 'error');
                             return;
                         }
 
                     } else {
                         $message = Text::_('COM_MINIORANGE_SAML_MSG_S');
+                        SAML_Utilities::keepRecords('Manual IDP Configuration', $message);
                         $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $message, 'error');
                         return;
                     }
                 } else {
                     $message = Text::_('COM_MINIORANGE_SAML_MSG_T');
+                    SAML_Utilities::keepRecords('Manual IDP Configuration', $message);
                     $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $message, 'error');
                     return;
                 }
@@ -511,6 +528,7 @@ class Miniorange_samlControllerMyaccount extends FormController
                     $certificate = SAML_Utilities::sanitize_certificate($post['certificate']);
                     if (!@openssl_x509_read($certificate)) {
                         $message = Text::_('COM_MINIORANGE_SAML_MSG_R');
+                        SAML_Utilities::keepRecords('Manual IDP Configuration', $message);
                         $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $message, 'error');
                         return;
                     }
@@ -523,7 +541,9 @@ class Miniorange_samlControllerMyaccount extends FormController
             $login_link_check = isset($post['login_link_check']) ? $post['login_link_check'] : '0';
             if ($login_link_check == '1') {
                 if (empty($post['dynamic_link'])) {
-                    $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp&id=1#', Text::_('COM_MINIORANGE_SAML_MSG_ENTER_LOGIN_BUTTON_NAME'), 'error');
+                    $message = Text::_('COM_MINIORANGE_SAML_MSG_ENTER_LOGIN_BUTTON_NAME');
+                    SAML_Utilities::keepRecords('Manual IDP Configuration', $message);
+                    $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp&id=1#', $message, 'error');
                     return;
                 }
             }
@@ -553,6 +573,7 @@ class Miniorange_samlControllerMyaccount extends FormController
 
             //Save saml configuration
             $message = Text::_('COM_MINIORANGE_SAML_MSG_TEST');
+            SAML_Utilities::keepRecords('Manual IDP Configuration', $message);
             $status = 'success';
             $this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $message);
 
@@ -570,6 +591,7 @@ class Miniorange_samlControllerMyaccount extends FormController
             $result->generic_update_query($database_name, $updatefieldsarray);
             //Save saml configuration
             $message = Text::_('COM_MINIORANGE_SAML_MSG_P');
+            SAML_Utilities::keepRecords('Manual IDP Configuration', $message);
             $status = 'success';
             $this->setRedirect('index.php?option=com_miniorange_saml&tab=attribute_mapping', $message);
         }
@@ -644,37 +666,41 @@ class Miniorange_samlControllerMyaccount extends FormController
             $post = Factory::getApplication()->input->post->getArray();
         }
         if (count($post) == 0) {
-            $this->setRedirect('index.php?option=com_miniorange_saml&tab=overview');
+            $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab');
             return;
         }
-        if (isset($post['query_phone']) && $post['query_phone'] != NULL) {
-            $pgone_num_validate = preg_match("/^\+?[0-9]+$/", $post['query_phone']);
-            if (!$pgone_num_validate) {
-                $this->setRedirect('index.php?option=com_miniorange_saml&tab=overview', Text::_('COM_MINIORANGE_SAML_MSG_15'), 'error');
+        $phone = '';
+        if (!empty($post['query_phone'])) {
+            $query_phone_code = isset($post['query_phone_code']) ? trim($post['query_phone_code']) : '';
+            $query_phone_number = preg_replace('/\D/', '', $post['query_phone']);
+            $phone = $query_phone_code . $query_phone_number;
+            if ($phone !== '' && !preg_match("/^\+?[0-9]{6,15}$/", $phone)) {
+                $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_15'), 'error');
                 return;
             }
         }
 
         if (Mo_saml_Local_Util::check_empty_or_null($post['query_email'])) {
-            $this->setRedirect('index.php?option=com_miniorange_saml&tab=overview', Text::_('COM_MINIORANGE_SAML_MSG_16'), 'error');
+            $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_16'), 'error');
             return;
         } else if (Mo_saml_Local_Util::check_empty_or_null(trim($post['mo_saml_query_support'] || trim($post['mo_saml_query_support'])))) {
-            $this->setRedirect('index.php?option=com_miniorange_saml&tab=overview', Text::_('COM_MINIORANGE_SAML_MSG_20'), 'error');
+            $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_20'), 'error');
             return;
         } else {
             $query = $post['mo_saml_query_support'];
             $email = $post['query_email'];
-            $phone = $post['query_phone'];
+            $client_timezone = isset($post['client_timezone']) ? $post['client_timezone'] : '';
+            $client_timezone_offset = isset($post['client_timezone_offset']) ? $post['client_timezone_offset'] : '';
             $contact_us = new Mo_saml_Local_Customer();
-            $submited = $contact_us->submit_contact_us($email, $phone, $query);
+            $submited = $contact_us->submit_contact_us($email, $phone, $query, $client_timezone, $client_timezone_offset);
             if ($submited == 'Query submitted.') {
-                $this->setRedirect('index.php?option=com_miniorange_saml&tab=overview', Text::_('COM_MINIORANGE_SAML_MSG_18'));
+                $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_18'));
                 return;
             } else if ($submited == 'Invalid email.') {
-                $this->setRedirect('index.php?option=com_miniorange_saml&tab=overview', Text::_('COM_MINIORANGE_SAML_MSG_21'), 'error');
+                $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_21'), 'error');
                 return;
             } else {
-                $this->setRedirect('index.php?option=com_miniorange_saml&tab=overview', Text::_('COM_MINIORANGE_SAML_MSG_17'), 'error');
+                $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_17'), 'error');
                 return;
             }
 
