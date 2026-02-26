@@ -103,3 +103,5 @@ Explore more Joomla plugins at: **https://plugins.miniorange.com**
 
 ![GitHub Downloads](https://img.shields.io/github/downloads/miniOrange-joomla/Joomla-SAML-SP/total?cacheSeconds=60)
 <img src="https://komarev.com/ghpvc/?username=miniOrange-joomla&label=Repo%20Views&color=0e75b6&style=flat" />
+
+
