@@ -117,4 +117,4 @@ Discover more Joomla plugins from miniOrange:
 
 **https://plugins.miniorange.com**
 
-![GitHub Downloads](https://img.shields.io/github/downloads/miniOrange-joomla/Joomla-SAML-SP/total?cacheSeconds=60)
+![GitHub Downloads](https://img.shields.io/github/downloads/miniOrange-joomla/Joomla-SAML-SP/total)
