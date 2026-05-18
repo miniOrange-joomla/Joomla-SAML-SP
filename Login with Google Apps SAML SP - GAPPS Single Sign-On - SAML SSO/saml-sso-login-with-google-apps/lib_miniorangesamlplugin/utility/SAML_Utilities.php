@@ -1114,7 +1114,8 @@ class SAML_Utilities
         $admin_phone  = isset($details ['admin_phone']) ? $details ['admin_phone'] : '';
         self::saveTestConfig('#__miniorange_saml_customer_details','admin_email', $admin_email);
         $contact_us = new Mo_saml_Local_Customer();
-        json_decode($contact_us->submit_feedback_form($admin_email, $admin_phone,$status,$cause), true);
+        $feedbackResponse = $contact_us->submit_feedback_form($admin_email, $admin_phone, $status, $cause);
+        json_decode(is_string($feedbackResponse) ? $feedbackResponse : '', true);
     }
 
     /**

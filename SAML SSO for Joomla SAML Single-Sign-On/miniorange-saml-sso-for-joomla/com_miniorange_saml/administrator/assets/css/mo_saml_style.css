@@ -1353,7 +1353,8 @@ input:checked+.mo_slider:before {
     --tw-border-opacity: 1;
     border-color: rgb(203 213 225 / var(--tw-border-opacity));
     padding: 1.5rem;
-    justify-content: space-between
+    justify-content: space-between;
+    min-width: 0;
 }
 
 .mo_saml_pricing_card.premium {
@@ -2536,6 +2537,17 @@ input.form-control:disabled {
 .mo_saml_feature_list {
     list-style: none;
     padding: 0;
+    max-width: 100%;
+}
+
+.mo_saml_feature_list li {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.mo_saml_pricing_card .feature-list {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .mo_saml_bundle_card {

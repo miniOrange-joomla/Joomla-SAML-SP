@@ -156,7 +156,7 @@ class plgSystemSamlredirect extends CMSPlugin
                 {
                     require_once JPATH_BASE . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo-saml-customer-setup.php';
     
-                    Mo_saml_Local_Customer::submit_feedback_form($admin_email, $admin_phone, $data1,'');
+                    Mo_saml_Local_Customer::submit_feedback_form($admin_email, $admin_phone, $data1, '', $feedback_email);
                 }
               
                 require_once JPATH_SITE . DIRECTORY_SEPARATOR . 'libraries' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Installer' . DIRECTORY_SEPARATOR . 'Installer.php';
@@ -996,7 +996,7 @@ class plgSystemSamlredirect extends CMSPlugin
             header('Content-Type: text/xml');
         }
         echo '<?xml version="1.0"?>
-        <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" validUntil="2025-08-04T23:59:59Z" cacheDuration="PT1446808792S" entityID="' . $sp_entity_id . '">
+        <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" validUntil="2028-03-26T23:59:59Z" cacheDuration="PT1446808792S" entityID="' . $sp_entity_id . '">
           <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
             <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
             <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="' . $acs_url . '" index="1"/>

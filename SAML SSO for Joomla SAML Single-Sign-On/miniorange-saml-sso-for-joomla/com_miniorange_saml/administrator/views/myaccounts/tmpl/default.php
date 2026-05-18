@@ -219,15 +219,13 @@ if ($test_config) {
         </div>
 
         <div id="support-tab" class="tab-pane <?php echo ($saml_active_tab === 'support_tab') ? 'active' : ''; ?>">
-            <div class="mo_boot_row mo_boot_container-fluid mo_saml_tab-content mo_saml_plugin">
+            <div class="mo_boot_container-fluid mo_saml_tab-content mo_saml_plugin">
                 <?php mo_saml_local_support(); ?>
             </div>
         </div>
 
         <div id="request-demo" class="tab-pane <?php echo ($saml_active_tab === 'request_demo') ? 'active' : ''; ?>">
-            <div class="mo_boot_row">
                 <?php request_for_demo(); ?>
-            </div>
         </div>
     </div>
 </div>
@@ -1571,7 +1569,7 @@ function licensing_page()
                             <p class="mo_boot_mb-2 mo_saml_addon_desc" style="font-size: 16px; min-height: 3rem;">
                                 <?php echo Text::_('COM_MINIORANGE_SAML_ROLE_REDIRECTION_DESC'); ?>
                             </p>
-                            <a href="https://plugins.miniorange.com/role-based-redirection-for-joomla" target="_blank"
+                            <a href="https://www.miniorange.com/contact" target="_blank"
                                 class="mo_saml_addon_link"><?php echo Text::_('COM_MINIORANGE_SAML_LEARN_MORE'); ?></a>
                         </div>
                     </div>
@@ -2361,7 +2359,7 @@ function request_for_demo()
         $admin_email = $current_user->email;
 
     ?>
-    <div class="mo_boot_col-sm-12 mo_main_saml_section">
+    <div class="mo_boot_container-fluid mo_saml_tab-content mo_saml_plugin">
         <div class="mo_boot_row mo_boot_p-2 mo_boot_mt-0">
             <div class="mo_boot_col-sm-12 mo_boot_px-2">
                 <div class="mo_boot_row">
@@ -3076,10 +3074,10 @@ function mo_saml_local_support()
                                 </div>
                                 <div class="mo_boot_row mo_boot_mt-2">
                                     <div class="mo_boot_col-sm-3 offset-1">
-                                        <strong><?php echo Text::_('COM_MINIORANGE_SAML_SETUP_CALL_DESCRIPTION');?></strong>
+                                        <strong><?php echo Text::_('COM_MINIORANGE_SAML_SETUP_CALL_DESCRIPTION');?>*</strong>
                                     </div>
                                     <div class="mo_boot_col-sm-6">
-                                        <textarea id="issue_description" rows="4" class="mo_boot_px-2 form-control mo_boot_col-sm-12" name="mo_saml_setup_call_desc" placeholder="<?php echo Text::_('COM_MINIORANGE_SAML_SETUP_CALL_DESCRIPTION_PLACEHOLDER');?>" ></textarea>
+                                        <textarea id="issue_description" rows="4" class="mo_boot_px-2 form-control mo_boot_col-sm-12" name="mo_saml_setup_call_desc" placeholder="<?php echo Text::_('COM_MINIORANGE_SAML_SETUP_CALL_DESCRIPTION_PLACEHOLDER');?>" required></textarea>
                                     </div>
                                 </div>
                                 
@@ -3256,7 +3254,7 @@ function identity_provider_settings()
                             <table class="mo_boot_m-0 mo_boot_col-sm-12">
                                 <thead>
                                     <tr>
-                                        <th class="mo_boot_p-4 mo_boot_text-center">
+                                        <th class="mo_boot_p-4 mo_boot_col-sm-3 mo_boot_text-center">
                                             <?php echo Text::_('COM_MINIORANGE_SAML_IDP_NAME'); ?>
                                         </th>
                                         <th class="mo_boot_p-4 mo_boot_text-center">
@@ -3280,10 +3278,12 @@ function identity_provider_settings()
                                                     <strong><?php echo !empty($idp_name) ? htmlspecialchars($idp_name) : 'IDP 1'; ?></strong>
                                                 </div>
                                             </td>
+                                       
                                             <td>
-                                                <div class="mo_saml_idp_sso_url mo_boot_p-4 mo_boot_text-center">
-                                                    <span title="<?php echo $sp_base_url . '?morequest=sso'; ?>">
-                                                        <?php echo $sp_base_url . '?morequest=sso'; ?>
+                                                <div class="mo_boot_p-4 mo_boot_text-center">
+                                                    <span id="sso_url" title="<?php echo $sp_base_url . '?morequest=sso'; ?>"
+                                                        class="mo_saml_highlight_background_url_note mo_boot_d-inline-block">
+                                                        <strong><?php echo $sp_base_url . '?morequest=sso'; ?></strong>
                                                     </span>
                                                 </div>
                                             </td>
@@ -3291,7 +3291,7 @@ function identity_provider_settings()
                                                 <div class="mo_saml_actions_container mo_boot_pl-lg-5 mo_boot_pr-lg-5">
                                                     <div class="mo_saml_actions_bar mo_saml_mini_section">
                                                         <button class="mo_saml_action_btn mo_saml_mini_section"
-                                                            onclick="copySsoUrl('<?php echo $sp_base_url . '?morequest=sso'; ?>')"
+                                                            onclick="copyToClipboard('#sso_url')"
                                                             title="<?php echo Text::_('COM_MINIORANGE_SAML_COPY'); ?>">
                                                             <i class="fa fa-copy"></i>
                                                         </button>
@@ -3376,8 +3376,8 @@ function import_export_configuration()
                         <h3 class="mo_saml_form_heading"><?php echo Text::_('COM_MINIORANGE_SAML_IMPORT_EXPORT_CONFIG'); ?>
                         </h3>
                     </div>
-                    <button class="mo_saml_toggle_btn_black mo_saml_btn_end" onclick="backToIdpList()" id="back_to_idp_list">
-                        <i class="fa fa-arrow-left"></i>
+                    <button class="mo_boot_btn btn_cstm" onclick="backToIdpList()" id="back_to_idp_list">
+                        <i class="fa fa-arrow-left"></i> <?php echo Text::_('COM_MINIORANGE_SAML_BACK'); ?>
                     </button>
                 </div>
 
@@ -3427,12 +3427,14 @@ function import_export_configuration()
                                     </p>
 
                                     <div class="mo_boot_col-lg-12 mo_boot_col-sm-8 mo_boot_mt-3">
-                                        <label for="metadata_uploaded_file" class="mo_saml_file_upload_btn"><?php echo Text::_('COM_MINIORANGE_SAML_CHOOSE_FILE'); ?></label>
+                                    <button type="button" class="mo_boot_btn btn_cstm mo_saml_block_cursor" disabled>
+                                        <i class="fa fa-upload"></i> <?php echo Text::_('COM_MINIORANGE_SAML_CHOOSE_FILE'); ?>
+                                    </button>
                                         <span id="file-name" class="mo_saml_file_upload_text"><?php echo Text::_('COM_MINIORANGE_SAML_NO_FILE_UPLOADED'); ?></span>
                                     </div>
                                 </div>
                                 <div class="mo_boot_col-sm-4 text-right">
-                                    <button type="button" class="mo_boot_btn btn_cstm" disabled>
+                                    <button type="button" class="mo_boot_btn btn_cstm mo_saml_block_cursor" disabled>
                                         <i class="fa fa-download"></i> <?php echo Text::_('COM_MINIORANGE_SAML_IMPORT_CONFIG'); ?>
                                     </button>
                                 </div>

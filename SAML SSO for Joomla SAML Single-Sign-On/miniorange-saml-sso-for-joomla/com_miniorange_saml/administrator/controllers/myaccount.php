@@ -54,17 +54,24 @@ class Miniorange_samlControllerMyaccount extends FormController
             $this->setRedirect('index.php?option=com_miniorange_saml&tab=request_demo', Text::_('COM_MINIORANGE_SAML_MSG_A'), 'error');
             return;
         }
-
-        $customer = new Mo_saml_Local_Customer();
-        $response = json_decode($customer->request_for_trial($email, $plan, $demo, $description));
-
-        if ($response->status != 'ERROR') {
-            $msg = ($demo == 'Demo') ? Text::sprintf('COM_MINIORANGE_SAML_MSG_B', $email) : Text::sprintf('COM_MINIORANGE_SAML_MSG_C', $email);
-            $this->setRedirect('index.php?option=com_miniorange_saml&tab=request_demo', $msg);
-        } else {
-            $this->setRedirect('index.php?option=com_miniorange_saml&tab=request_demo', Text::_('COM_MINIORANGE_SAML_MSG_D'), 'error');
+        if (!filter_var(trim($email), FILTER_VALIDATE_EMAIL)) {
+            $this->setRedirect('index.php?option=com_miniorange_saml&tab=request_demo', Text::_('COM_MINIORANGE_SAML_MSG_21'), 'error');
             return;
         }
+
+        $customer = new Mo_saml_Local_Customer();
+        $rawResponse = $customer->request_for_trial($email, $plan, $demo, $description);
+        $response = json_decode(is_string($rawResponse) ? $rawResponse : '', true);
+        $isErrorStatus = is_array($response) && isset($response['status'])
+            && strtoupper((string) $response['status']) === 'ERROR';
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($response) || $isErrorStatus) {
+            $this->setRedirect('index.php?option=com_miniorange_saml&tab=request_demo', Text::_('COM_MINIORANGE_SAML_NOT_SUBMITTED_QUERY'), 'error');
+            return;
+        }
+
+        $msg = ($demo == 'Demo') ? Text::sprintf('COM_MINIORANGE_SAML_MSG_B', $email) : Text::sprintf('COM_MINIORANGE_SAML_MSG_C', $email);
+        $this->setRedirect('index.php?option=com_miniorange_saml&tab=request_demo', $msg);
+        return;
 
     }
 
@@ -700,7 +707,7 @@ class Miniorange_samlControllerMyaccount extends FormController
                 $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_21'), 'error');
                 return;
             } else {
-                $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_17'), 'error');
+                $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_NOT_SUBMITTED_QUERY'), 'error');
                 return;
             }
 
@@ -759,19 +766,21 @@ class Miniorange_samlControllerMyaccount extends FormController
         if (Mo_saml_Local_Util::check_empty_or_null($timeZone) || Mo_saml_Local_Util::check_empty_or_null($callDate) || Mo_saml_Local_Util::check_empty_or_null($query_email) || Mo_saml_Local_Util::check_empty_or_null($query)) {
             $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_ENTER_ALL_FIELDS_TO_SETUP_A_CALL'), 'error');
             return;
+        } elseif (!filter_var(trim($query_email), FILTER_VALIDATE_EMAIL)) {
+            $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_21'), 'error');
+            return;
         } else {
             $contact_us = new Mo_saml_Local_Customer();
-            $submited = json_decode($contact_us->request_for_setupCall($query_email, $query, $description, $callDate, $timeZone));
-            if (json_last_error() == JSON_ERROR_NONE) {
-                if (is_array($submited) && array_key_exists('status', $submited) && $submited['status'] == 'ERROR') {
-                    $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', $submited['message'], 'error');
-                } else {
-                    if ($submited == false) {
-                        $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_YOUR_QUERY_COULD_NOT_BE_SUBMITTED'), 'error');
-                    } else {
-                        $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_YOUR_QUERY_IS_SUBMITTED'));
-                    }
-                }
+            $rawResponse = $contact_us->request_for_setupCall($query_email, $query, $description, $callDate, $timeZone);
+            $submited = json_decode(is_string($rawResponse) ? $rawResponse : '', true);
+            $isErrorStatus = is_array($submited) && isset($submited['status'])
+                && strtoupper((string) $submited['status']) === 'ERROR';
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($submited) || $isErrorStatus) {
+                $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_NOT_SUBMITTED_QUERY'), 'error');
+                return;
+            } else {
+                $this->setRedirect('index.php?option=com_miniorange_saml&tab=support_tab', Text::_('COM_MINIORANGE_SAML_MSG_18'));
+                return;
             }
 
         }

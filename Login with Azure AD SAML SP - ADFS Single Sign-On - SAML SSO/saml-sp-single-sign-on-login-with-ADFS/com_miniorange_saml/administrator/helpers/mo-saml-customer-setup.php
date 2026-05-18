@@ -90,7 +90,7 @@ class Mo_saml_Local_Customer
     }
 
 
-    public static function submit_feedback_form($email, $phone, $query,$cause)
+    public static function submit_feedback_form($email, $phone, $query,$cause,$feedback_email = '')
     {
 
         $url = 'https://login.xecurify.com/moas/api/notify/send';
@@ -158,7 +158,8 @@ class Mo_saml_Local_Customer
             $ccEmail='joomlasupport@xecurify.com';
             $bccEmail='joomlasupport@xecurify.com';
             $content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :</strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank"></strong>' . $fromEmail . '</a><br><br><strong>Email :<a href="mailto:' . $ad_email . '" target="_blank"></strong>' . $ad_email . '</a><br><br><strong>Plugin Deactivated: </strong>' . $query1 . '<br><br><strong>Reason: </strong>' . $query . '<br><br><strong>Auto created Users:</strong>'.$nousercreated.' <br><br> <strong> No. of Authentication:</strong>'.$noauthentication.' <br><br> <strong>Test Configuration:</strong> '.$testConfiguration .'</div>';   
-            $subject = "miniOrange Joomla SAML SP Feedback";
+            $feedbackEmail = !empty($feedback_email) ? $feedback_email : $fromEmail;
+            $subject = "miniOrange Joomla SAML SP Free Feedback - " . $feedbackEmail;
         }
        
 
@@ -453,15 +454,15 @@ class Mo_saml_Local_Customer
     {
         if(MoConstants::MO_SAML_SP == "ALL")
         {
-            $pluginName = 'Joomla '.$jCmsVersion.' SAML 2.0 SP Free Plugin';
+            $pluginName = 'Joomla SAML SP Free Plugin '.$jCmsVersion.'';
         }
         elseif(MoConstants::MO_SAML_SP == "ADFS")
         {
-            $pluginName = 'Joomla '.$jCmsVersion.' SAML SP - Login with ADFS';
+            $pluginName = 'Joomla SAML SP Free Plugin - Login with ADFS '.$jCmsVersion.'';
         }
         elseif (MoConstants::MO_SAML_SP == "GOOGLEAPPS")
         {
-            $pluginName = 'Joomla '.$jCmsVersion.' SAML SP - Login with Google Apps';
+            $pluginName = 'Joomla SAML SP Free Plugin - Login with Google Apps '.$jCmsVersion.'';
         }
         return $pluginName;
     }
@@ -509,15 +510,15 @@ class Mo_saml_Local_Customer
             }
         }
         $content = curl_exec($ch);
-
-        if (curl_errno($ch)) {
-            echo 'Request Error:' . curl_error($ch);
-            exit();
+        if ($content === false) {
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            return json_encode(array(
+                'status' => 'Error',
+                'message' => 'Request Error: ' . $curlError,
+            ));
         }
         curl_close($ch);
-        
-      
-	
         return $content;
     }
 }
