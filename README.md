@@ -116,3 +116,5 @@ For **24/7 support**, setup assistance, and documentation:
 Discover more Joomla plugins from miniOrange:
 
 **https://plugins.miniorange.com**
+
+![GitHub Downloads](https://img.shields.io/github/downloads/miniOrange-joomla/Joomla-SAML-SP/total?cacheSeconds=60)
