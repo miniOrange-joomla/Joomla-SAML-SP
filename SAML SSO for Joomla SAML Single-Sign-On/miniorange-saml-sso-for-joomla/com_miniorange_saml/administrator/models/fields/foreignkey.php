@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -14,6 +14,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Form\FormField;
 use Joomla\CMS\HTML\HTMLHelper;
 include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
+
 /**
  * Supports a value from an external table
  *
@@ -29,13 +30,33 @@ class JFormFieldForeignKey extends FormField
 	 */
 	protected $type = 'foreignkey';
 
-	private $input_type;
+	/**
+	 * Input type for the field.
+	 *
+	 * @var    string
+	 */
+	private $inputType;
 
+	/**
+	 * Database table name.
+	 *
+	 * @var    string
+	 */
 	private $table;
 
-	private $key_field;
+	/**
+	 * Key column name.
+	 *
+	 * @var    string
+	 */
+	private $keyField;
 
-	private $value_field;
+	/**
+	 * Value column name.
+	 *
+	 * @var    string
+	 */
+	private $valueField;
 
 	/**
 	 * Method to get the field input markup.
@@ -46,31 +67,21 @@ class JFormFieldForeignKey extends FormField
 	 */
 	protected function getInput()
 	{
-		// Assign field properties.
-		// Type of input the field shows
-		$this->input_type = $this->getAttribute('input_type');
-
-		// Database Table
+		$this->inputType = $this->getAttribute('input_type');
 		$this->table = $this->getAttribute('table');
+		$this->keyField = (string) $this->getAttribute('key_field');
+		$this->valueField = (string) $this->getAttribute('value_field');
 
-		// The field that the field will save on the database
-		$this->key_field = (string) $this->getAttribute('key_field');
-
-		// The column that the field shows in the input
-		$this->value_field = (string) $this->getAttribute('value_field');
-
-		// Initialize variables.
 		$html = '';
 
-		// Load all the field options
 		$db    = MoSamlDbHelper::getDb();
 		$query = $db->getQuery(true);
 
 		$query
 			->select(
 				array(
-					$db->quoteName($this->key_field),
-					$db->quoteName($this->value_field)
+					$db->quoteName($this->keyField),
+					$db->quoteName($this->valueField)
 				)
 			)
 			->from($this->table);
@@ -78,45 +89,40 @@ class JFormFieldForeignKey extends FormField
 		$db->setQuery($query);
 		$results = $db->loadObjectList();
 
-		$input_options = 'class="' . $this->getAttribute('class') . '"';
+		$inputOptions = 'class="' . $this->getAttribute('class') . '"';
 
-		// Depends of the type of input, the field will show a type or another
-		switch ($this->input_type)
+		switch ($this->inputType)
 		{
 			case 'list':
 			default:
 				$options = array();
 
-				// Iterate through all the results
 				foreach ($results as $result)
 				{
-					$options[] = HTMLHelper::_('select.option', $result->{$this->key_field}, $result->{$this->value_field});
+					$options[] = HTMLHelper::_('select.option', $result->{$this->keyField}, $result->{$this->valueField});
 				}
 
 				$value = $this->value;
 
-				// If the value is a string -> Only one result
 				if (is_string($value))
 				{
 					$value = array($value);
 				}
 				elseif (is_object($value))
 				{
-					// If the value is an object, let's get its properties.
 					$value = get_object_vars($value);
 				}
 
-				// If the select is multiple
 				if ($this->multiple)
 				{
-					$input_options .= 'multiple="multiple"';
+					$inputOptions .= 'multiple="multiple"';
 				}
 				else
 				{
 					array_unshift($options, HTMLHelper::_('select.option', '', ''));
 				}
 
-				$html = HTMLHelper::_('select.genericlist', $options, $this->name, $input_options, 'value', 'text', $value, $this->id);
+				$html = HTMLHelper::_('select.genericlist', $options, $this->name, $inputOptions, 'value', 'text', $value, $this->id);
 				break;
 		}
 
@@ -126,20 +132,18 @@ class JFormFieldForeignKey extends FormField
 	/**
 	 * Wrapper method for getting attributes from the form element
 	 *
-	 * @param   string  $attr_name  Attribute name
-	 * @param   mixed   $default    Optional value to return if attribute not found
+	 * @param   string  $attrName  Attribute name
+	 * @param   mixed   $default   Optional value to return if attribute not found
 	 *
 	 * @return mixed The value of the attribute if it exists, null otherwise
 	 */
-	public function getAttribute($attr_name, $default = null)
+	public function getAttribute($attrName, $default = null)
 	{
-		if (!empty($this->element[$attr_name]))
+		if (!empty($this->element[$attrName]))
 		{
-			return $this->element[$attr_name];
+			return $this->element[$attrName];
 		}
-		else
-		{
-			return $default;
-		}
+
+		return $default;
 	}
 }

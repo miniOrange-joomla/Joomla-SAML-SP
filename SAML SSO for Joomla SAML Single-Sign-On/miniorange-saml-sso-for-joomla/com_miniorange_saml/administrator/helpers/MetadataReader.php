@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -12,49 +12,108 @@
 
 defined('_JEXEC') or die;
 
-class IDPMetadataReader{
-
+class IDPMetadataReader
+{
+	/**
+	 * Identity providers parsed from metadata.
+	 *
+	 * @var    array
+	 */
 	private $identityProviders;
+
+	/**
+	 * Service providers parsed from metadata.
+	 *
+	 * @var    array
+	 */
 	private $serviceProviders;
 
-	public function __construct(DOMNode $xml = NULL){
+	public function __construct(DOMNode $xml = null)
+	{
 
 		$this->identityProviders = array();
 		$this->serviceProviders = array();
 
 		$entityDescriptors = SAML_Utilities::xpQuery($xml, './saml_metadata:EntityDescriptor');
 
-		foreach ($entityDescriptors as $entityDescriptor) {
+		foreach ($entityDescriptors as $entityDescriptor)
+		{
 			$idpSSODescriptor = SAML_Utilities::xpQuery($entityDescriptor, './saml_metadata:IDPSSODescriptor');
-			
-			if(isset($idpSSODescriptor) && !empty($idpSSODescriptor)){
-				array_push($this->identityProviders,new IdentityProviders($entityDescriptor));
+
+			if (isset($idpSSODescriptor) && !empty($idpSSODescriptor))
+			{
+				array_push($this->identityProviders, new IdentityProviders($entityDescriptor));
 			}
-			//TODO: add sp descriptor
+
+			// TODO: add sp descriptor
 		}
 	}
 
-	public function getIdentityProviders(){
+	public function getIdentityProviders()
+	{
 		return $this->identityProviders;
 	}
 
-	public function getServiceProviders(){
+	public function getServiceProviders()
+	{
 		return $this->serviceProviders;
 	}
 
 }
 
-class IdentityProviders{
-
+class IdentityProviders
+{
+	/**
+	 * Identity provider display name.
+	 *
+	 * @var    string
+	 */
 	private $idpName;
+
+	/**
+	 * Entity ID.
+	 *
+	 * @var    string
+	 */
 	private $entityID;
+
+	/**
+	 * SSO login endpoints by binding.
+	 *
+	 * @var    array
+	 */
 	private $loginDetails;
+
+	/**
+	 * SLO logout endpoints by binding.
+	 *
+	 * @var    array
+	 */
 	private $logoutDetails;
+
+	/**
+	 * Signing certificates.
+	 *
+	 * @var    array
+	 */
 	private $signingCertificate;
+
+	/**
+	 * Encryption certificates.
+	 *
+	 * @var    array
+	 */
 	private $encryptionCertificate;
+
+	/**
+	 * Whether authn requests must be signed.
+	 *
+	 * @var    mixed
+	 */
 	private $signedRequest;
 
-	public function __construct(DOMElement $xml = NULL){
+	public function __construct(DOMElement $xml = null)
+	{
 
 		$this->idpName = '';
 		$this->loginDetails = array();
@@ -62,133 +121,178 @@ class IdentityProviders{
 		$this->signingCertificate = array();
 		$this->encryptionCertificate = array();
 
-		if ($xml->hasAttribute('entityID')) {
-            $this->entityID = $xml->getAttribute('entityID');
-        }
+		if ($xml->hasAttribute('entityID'))
+		{
+			$this->entityID = $xml->getAttribute('entityID');
+		}
 
-        if($xml->hasAttribute('WantAuthnRequestsSigned')){
-        	$this->signedRequest = $xml->getAttribute('WantAuthnRequestsSigned');
-        }
+		if ($xml->hasAttribute('WantAuthnRequestsSigned'))
+		{
+			$this->signedRequest = $xml->getAttribute('WantAuthnRequestsSigned');
+		}
 
-        $idpSSODescriptor = SAML_Utilities::xpQuery($xml, './saml_metadata:IDPSSODescriptor');
+		$idpSSODescriptor = SAML_Utilities::xpQuery($xml, './saml_metadata:IDPSSODescriptor');
 
-        if (count($idpSSODescriptor) > 1) {
-            throw new Exception('More than one <IDPSSODescriptor> in <EntityDescriptor>.');
-        } elseif (empty($idpSSODescriptor)) {
-            throw new Exception('Missing required <IDPSSODescriptor> in <EntityDescriptor>.');
-        }
-        $idpSSODescriptorEL = $idpSSODescriptor[0];
+		if (count($idpSSODescriptor) > 1)
+		{
+			throw new Exception('More than one <IDPSSODescriptor> in <EntityDescriptor>.');
+		}
+		elseif (empty($idpSSODescriptor))
+		{
+			throw new Exception('Missing required <IDPSSODescriptor> in <EntityDescriptor>.');
+		}
 
-        $info = SAML_Utilities::xpQuery($xml, './saml_metadata:Extensions');
-        
-        if($info)
-        	$this->parseInfo($idpSSODescriptorEL);
-        $this->parseSSOService($idpSSODescriptorEL);
-        $this->parseSLOService($idpSSODescriptorEL);
-        $this->parsex509Certificate($idpSSODescriptorEL);
+		$idpSSODescriptorEL = $idpSSODescriptor[0];
+
+		$info = SAML_Utilities::xpQuery($xml, './saml_metadata:Extensions');
+
+		if ($info)
+		{
+			$this->parseInfo($idpSSODescriptorEL);
+		}
+
+		$this->parseSSOService($idpSSODescriptorEL);
+		$this->parseSLOService($idpSSODescriptorEL);
+		$this->parsex509Certificate($idpSSODescriptorEL);
 
 	}
 
-	private function parseInfo($xml){
+	private function parseInfo($xml)
+	{
 		$displayNames = SAML_Utilities::xpQuery($xml, './mdui:UIInfo/mdui:DisplayName');
-		foreach ($displayNames as $name) {
-			if($name->hasAttribute('xml:lang') && $name->getAttribute('xml:lang')=="en"){
+
+		foreach ($displayNames as $name)
+		{
+			if ($name->hasAttribute('xml:lang') && $name->getAttribute('xml:lang') == "en")
+			{
 				$this->idpName = $name->textContent;
 			}
 		}
 	}
 
-	private function parseSSOService($xml){
+	private function parseSSOService($xml)
+	{
 		$ssoServices = SAML_Utilities::xpQuery($xml, './saml_metadata:SingleSignOnService');
-		foreach ($ssoServices as $ssoService) {
-			$binding = str_replace("urn:oasis:names:tc:SAML:2.0:bindings:","",$ssoService->getAttribute('Binding'));
-	        $this->loginDetails = array_merge( 
-	        	$this->loginDetails, 
-	        	array($binding => $ssoService->getAttribute('Location')) 
-	        );
-	    }
+
+		foreach ($ssoServices as $ssoService)
+		{
+			$binding = str_replace("urn:oasis:names:tc:SAML:2.0:bindings:", "", $ssoService->getAttribute('Binding'));
+			$this->loginDetails = array_merge(
+				$this->loginDetails,
+				array($binding => $ssoService->getAttribute('Location'))
+			);
+		}
 	}
 
-	private function parseSLOService($xml){
+	private function parseSLOService($xml)
+	{
 		$sloServices = SAML_Utilities::xpQuery($xml, './saml_metadata:SingleLogoutService');
-		foreach ($sloServices as $sloService) {
-			$binding = str_replace("urn:oasis:names:tc:SAML:2.0:bindings:","",$sloService->getAttribute('Binding'));
-	        $this->logoutDetails = array_merge( 
-	        	$this->logoutDetails, 
-	        	array($binding => $sloService->getAttribute('Location')) 
-	        );
-	    }
+
+		foreach ($sloServices as $sloService)
+		{
+			$binding = str_replace("urn:oasis:names:tc:SAML:2.0:bindings:", "", $sloService->getAttribute('Binding'));
+			$this->logoutDetails = array_merge(
+				$this->logoutDetails,
+				array($binding => $sloService->getAttribute('Location'))
+			);
+		}
 	}
 
-	private function parsex509Certificate($xml){
-		foreach ( SAML_Utilities::xpQuery($xml, './saml_metadata:KeyDescriptor') as $KeyDescriptorNode ) {
-			if($KeyDescriptorNode->hasAttribute('use')){
-				if($KeyDescriptorNode->getAttribute('use')=='encryption'){
-					$this->parseEncryptionCertificate($KeyDescriptorNode);
-				}else{
-					$this->parseSigningCertificate($KeyDescriptorNode);
+	private function parsex509Certificate($xml)
+	{
+		foreach (SAML_Utilities::xpQuery($xml, './saml_metadata:KeyDescriptor') as $keyDescriptorNode)
+		{
+			if ($keyDescriptorNode->hasAttribute('use'))
+			{
+				if ($keyDescriptorNode->getAttribute('use') == 'encryption')
+				{
+					$this->parseEncryptionCertificate($keyDescriptorNode);
 				}
-			}else{
-				$this->parseSigningCertificate($KeyDescriptorNode);
+				else
+				{
+					$this->parseSigningCertificate($keyDescriptorNode);
+				}
+			}
+			else
+			{
+				$this->parseSigningCertificate($keyDescriptorNode);
 			}
 		}
 	}
 
-	private function parseSigningCertificate($xml){
+	private function parseSigningCertificate($xml)
+	{
 		$certNode = SAML_Utilities::xpQuery($xml, './ds:KeyInfo/ds:X509Data/ds:X509Certificate');
 		$certData = trim($certNode[0]->textContent);
 		$certData = str_replace(array ( "\r", "\n", "\t", ' '), '', $certData);
-		if(!empty($certNode))
-			array_push($this->signingCertificate, SAML_Utilities::sanitize_certificate( $certData ));
+
+		if (!empty($certNode))
+		{
+			array_push($this->signingCertificate, SAML_Utilities::sanitizeCertificate($certData));
+		}
 	}
 
 
-	private function parseEncryptionCertificate($xml){
+	private function parseEncryptionCertificate($xml)
+	{
 		$certNode = SAML_Utilities::xpQuery($xml, './ds:KeyInfo/ds:X509Data/ds:X509Certificate');
 		$certData = trim($certNode[0]->textContent);
 		$certData = str_replace(array ( "\r", "\n", "\t", ' '), '', $certData);
-		if(!empty($certNode))
+
+		if (!empty($certNode))
+		{
 			array_push($this->encryptionCertificate, $certData);
+		}
 	}
 
-	public function getIdpName(){
+	public function getIdpName()
+	{
 		return "";
 	}
 
-	public function getEntityID(){
+	public function getEntityID()
+	{
 		return $this->entityID;
 	}
 
-	public function getLoginURL($binding){
+	public function getLoginURL($binding)
+	{
 		return $this->loginDetails[$binding];
 	}
 
-	public function getLogoutURL($binding){
+	public function getLogoutURL($binding)
+	{
 		return $this->logoutDetails[$binding];
 	}
 
-	public function getLoginDetails(){
+	public function getLoginDetails()
+	{
 		return $this->loginDetails;
 	}
 
-	public function getLogoutDetails(){
+	public function getLogoutDetails()
+	{
 		return $this->logoutDetails;
 	}
 
-	public function getSigningCertificate(){
+	public function getSigningCertificate()
+	{
 		return $this->signingCertificate;
 	}
 
-	public function getEncryptionCertificate(){
+	public function getEncryptionCertificate()
+	{
 		return $this->encryptionCertificate[0];
 	}
 
-	public function isRequestSigned(){
+	public function isRequestSigned()
+	{
 		return $this->signedRequest;
 	}
 
 }
 
-class ServiceProviders{
-	//TODO
+class ServiceProviders
+{
+	// TODO
 }

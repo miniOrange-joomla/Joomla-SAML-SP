@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -21,7 +21,7 @@ use Joomla\CMS\Language\Text;
  *
  * @since  1.6
  */
-class Miniorange_samlHelpersMiniorange_saml
+class Miniorange_SamlHelpersMiniorange_Saml
 {
 	/**
 	 * Configure the Linkbar.
@@ -32,7 +32,7 @@ class Miniorange_samlHelpersMiniorange_saml
 	 */
 	public static function addSubmenu($vName = '')
 	{
-	
+
 	}
 
 	/**

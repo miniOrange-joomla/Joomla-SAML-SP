@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -42,11 +42,11 @@ class JFormFieldCreatedby extends FormField
 		$html = array();
 
 		// Load user
-		$user_id = $this->value;
+		$userId = $this->value;
 
-		if ($user_id)
+		if ($userId)
 		{
-			$user = Factory::getUser($user_id);
+			$user = Factory::getUser($userId);
 		}
 		else
 		{

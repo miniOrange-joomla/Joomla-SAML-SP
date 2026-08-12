@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -20,10 +20,10 @@ use Joomla\CMS\MVC\Model\AdminModel;
  *
  * @since  1.6
  */
-class Miniorange_samlModelMyaccount extends AdminModel
+class Miniorange_SamlModelMyaccount extends AdminModel
 {
-	public function getForm ($data = array(), $loadData = true)
+	public function getForm($data = array(), $loadData = true)
 	{
-	
+
 	}
 }

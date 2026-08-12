@@ -5,30 +5,26 @@ function moSAMLUpgrade() {
     add_css_tab("#licensingtab");
 }
 function close_custom_crt_modal() {
-    jQuery("#my_TC_Modal").css("display", "none");
+    jQuery("#my_custom_crt_modal").css("display", "none");
     jQuery("#plugin_tool_bar").css("z-index", "1000");
-    location.reload();
+    jQuery("#generate_certificate_form").hide();
+    jQuery("#mo_gen_cert").show();
 }
 function show_custom_crt_modal() {
     jQuery("#plugin_tool_bar").css("z-index", "0");
+    jQuery("#generate_certificate_form").hide();
+    jQuery("#mo_gen_cert").show();
     jQuery("#my_custom_crt_modal").css("display", "block");
-
 }
 function add_css_tab(element) {
-    // Remove active class from all navigation tabs
-    jQuery(".mo_nav_tab_active").removeClass("mo_nav_tab_active").removeClass("active");
-
-    // Add active class to clicked navigation tab
+    jQuery(".mo_nav_tab_active").removeClass("mo_nav_tab_active active");
     jQuery(element).addClass("mo_nav_tab_active");
 
-    // Hide all tab content
-    jQuery(".tab-pane").removeClass("active").hide();
+    jQuery(".tab-pane").removeClass("active");
 
-    // Get the target tab content ID from the href attribute
     var targetId = jQuery(element).attr("href");
     if (targetId) {
-        // Show the target tab content
-        jQuery(targetId).addClass("active").show();
+        jQuery(targetId).addClass("active");
     }
 }
 
@@ -103,12 +99,14 @@ function show_gen_cert_form() {
     jQuery("#generate_certificate_form").show();
     jQuery("#mo_gen_cert").hide();
     jQuery("#mo_gen_tab").hide();
+    jQuery("#my_custom_crt_modal").scrollTop(0);
 }
 
 function hide_gen_cert_form() {
     jQuery("#generate_certificate_form").hide();
     jQuery("#mo_gen_cert").show();
     jQuery("#mo_gen_tab").show();
+    jQuery("#my_custom_crt_modal").scrollTop(0);
 }
 
 
@@ -543,12 +541,19 @@ function changeSubMenuSupport(tabPanelId, element0, element1) {
     var $panel = jQuery(tabPanelId);
     $panel.find('.mo_saml_current_tab').removeClass('mo_saml_current_tab');
     jQuery(element0).addClass('mo_saml_current_tab');
-    // Hide both content divs first
-    jQuery('#mo_general_support').css('display', 'none');
-    jQuery('#mo_screen_share').css('display', 'none');
-    // Show the selected div
-    jQuery(element1).css('display', 'block');
+    jQuery('.mo-support-panel').removeClass('mo-support-panel-active');
+    jQuery(element1).addClass('mo-support-panel-active');
 }
+
+jQuery(document).on('click', '.mo-support-subtab', function (e) {
+    e.preventDefault();
+    var $li = jQuery(this).closest('li');
+    var panelId = $li.data('panel');
+    if (!panelId) {
+        return;
+    }
+    changeSubMenuSupport('#support-subtabs', $li[0], '#' + panelId);
+});
 
 // Contact form: set browser timezone into hidden fields (name + offset)
 function moSamlSetBrowserTimezone() {

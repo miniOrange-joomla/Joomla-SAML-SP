@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -15,510 +15,615 @@ defined('_JEXEC') or die;
 /**
  * This library is miniOrange Authentication Service.
  * Contains Request Calls to Customer service.
- **/
+ */
 use Joomla\CMS\Factory;
 use Joomla\CMS\Version;
 require_once 'MoConstants.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'mo-saml-utility.php';
 
-class Mo_saml_Local_Customer
+class Mo_Saml_Local_Customer
 {
+	/**
+	 * @var    string
+	 */
+	public $email;
 
-    public $email;
-    public $phone;
-    public $customerKey;
-    public $transactionId;
+	/**
+	 * @var    string
+	 */
+	public $phone;
 
-    /*
-    ** Initial values are hardcoded to support the miniOrange framework to generate OTP for email.
-    ** We need the default value for creating the OTP the first time,
-    ** As we don't have the Default keys available before registering the user to our server.
-    ** This default values are only required for sending an One Time Passcode at the user provided email address.
-    */
+	/**
+	 * @var    string
+	 */
+	public $customerKey;
+
+	/**
+	 * @var    string
+	 */
+	public $transactionId;
+
+	public function createCustomer()
+	{
+		if (!Mo_Saml_Local_Util::isCurlInstalled())
+		{
+			return json_encode(
+				array(
+					"statusCode" => 'ERROR',
+					'statusMessage' => 'Error while creating user. Please check your configuration. Also check troubleshooting under saml configuration.'
+				)
+			);
+		}
+
+		$hostname = Mo_Saml_Local_Util::getHostname();
+
+		$url = $hostname . '/moas/rest/customer/add';
+		$currentUser = Factory::getUser();
+		$customerDetails = (new Mo_Saml_Local_Util)->loadDbValues('#__miniorange_saml_customer_details');
+		$this->email = $customerDetails['email'];
+		$this->phone = $customerDetails['admin_phone'];
+		$password = $customerDetails['password'];
+
+		if (!empty($password))
+		{
+			$password = base64_decode($password);
+		}
+
+		$fields = array(
+			'companyName' => $_SERVER['SERVER_NAME'],
+			'areaOfInterest' => 'Joomla SAML 2.0 SP SSO Plugin',
+			'firstname' => $currentUser->username,
+			'email' => $this->email,
+			'phone' => $this->phone,
+			'password' => $password
+		);
+		$fieldString = json_encode($fields);
+
+		return self::curlCall($url, $fieldString, 1);
+	}
+
+	public function getCustomerKey($email, $password)
+	{
+		if (!Mo_Saml_Local_Util::isCurlInstalled())
+		{
+			return json_encode(
+				array(
+					"apiKey" => 'CURL_ERROR',
+					'token' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'
+				)
+			);
+		}
+
+		$hostname = Mo_Saml_Local_Util::getHostname();
+
+		$url = $hostname . "/moas/rest/customer/key";
+
+		$fields = array(
+			'email' => $email,
+			'password' => $password
+		);
+
+		$fieldString = json_encode($fields);
+
+		return self::curlCall($url, $fieldString, 0);
+	}
 
 
-    private $defaultCustomerKey = "16555";
-    private $defaultApiKey = "fFd2XcvTGDemZvbw1bcUesNJWEqKbbUq";
+	public static function submitFeedbackForm($email, $phone, $query, $cause, $feedbackEmail = '')
+	{
 
-    function create_customer()
-    {
-        if (!Mo_saml_Local_Util::is_curl_installed()) {
-            return json_encode(array("statusCode" => 'ERROR', 'statusMessage' => 'Error while creating user.' . '. Please check your configuration. Also check troubleshooting under saml configuration.'));
-        }
-        $hostname = Mo_saml_Local_Util::getHostname();
+		$url = 'https://login.xecurify.com/moas/api/notify/send';
 
-        $url = $hostname . '/moas/rest/customer/add';
-        $current_user = Factory::getUser();
-        $customer_details = (new Mo_saml_Local_Util)->_load_db_values('#__miniorange_saml_customer_details');
-        $this->email = $customer_details['email'];
-        $this->phone = $customer_details['admin_phone'];
-        $password = $customer_details['password'];
+		$customerKey = MoConstants::getDefaultCustomerKey();
+		$fromEmail = $email;
+		$phpVersion = phpversion();
+		$jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
+		$moPluginVersion = SAML_Utilities::getPluginVersion();
+		$osVersion    = SAML_Utilities::getOsInfo();
+		$serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
+		$webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
+		$pluginName    = (new Mo_Saml_Local_Customer)->pluginName($moPluginVersion);
+		$result        = (new Mo_Saml_Local_Util)->loadDbValues('#__miniorange_saml_config');
+		$details       = (new Mo_Saml_Local_Util)->loadDbValues('#__miniorange_saml_customer_details');
+		$adEmail       = isset($details ['email']) ? $details ['email'] : '';
+		$nousercreated = base64_decode($result['userslim']);
+		$noauthentication = base64_decode($result['sso_test']);
+		$ssoUrl = $result['single_signon_service_url'];
 
-        if (!empty($password))
-            $password = base64_decode($password);
+		if ($result['test_configuration'] == true)
+		{
+			$testConfiguration = 'Successful';
+		}
+		elseif ($noauthentication == 0)
+		{
+			$testConfiguration = 'Not tested';
+		}
+		else
+		{
+			$testConfiguration = 'Unsuccessful';
+		}
 
-        $fields = array(
-            'companyName' => $_SERVER['SERVER_NAME'],
-            'areaOfInterest' => 'Joomla SAML 2.0 SP SSO Plugin',
-            'firstname' => $current_user->username,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'password' => $password
-        );
-        $field_string = json_encode($fields);
+		$ssoStatus = ($result['sso_status'] == true) ? 'Successful' : 'Unsuccessful';
+		$query1 = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' | PHP ' . $phpVersion . ' | OS ' . $osVersion . ' | Web Server: ' . $webServer . '] ';
 
-        return self::curl_call($url,$field_string,1);
-    }
+		if ($query == 'Test Configuration')
+		{
+			$ccEmail = 'nutan.barad@xecurify.com';
+			$bccEmail = 'mandar.maske@xecurify.com';
+			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $adEmail . '" target="_blank">' . $adEmail . '</a></strong><br><br><strong>SSO URL: </strong>' . $ssoUrl . ' <br><br><strong>Auto created Users:</strong>' . $nousercreated . ' <br><br> <strong> No. of Authentication:</strong>' . $noauthentication . ' <br><br>  <strong>Test Configuration:</strong> ' . $testConfiguration . '<br><br><strong>Possible Cause:</strong> ' . $cause . '<br><br><strong> System Information: </strong>' . $query1 . '</div>';
+			$subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
+		}
+		elseif ($query == 'SSO Status')
+		{
+			$ccEmail = 'nutan.barad@xecurify.com';
+			$bccEmail = 'mandar.maske@xecurify.com';
+			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :</strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $adEmail . '" target="_blank">' . $adEmail . '</a></strong><br><br><strong>SSO URL: </strong>' . $ssoUrl . ' <br><br><strong>Auto created Users:</strong>' . $nousercreated . ' <br><br> <strong> No. of Authentication:</strong>' . $noauthentication . ' <br><br> <strong>SSO Status:</strong> ' . $ssoStatus . '<br><br><strong>Possible Cause:</strong> ' . $cause . '<br><br><strong> System Information:</strong> ' . $query1 . '</div>';
+			$subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
+		}
+		elseif ($query == 'Metadata Fetched')
+		{
+			$ccEmail = 'nutan.barad@xecurify.com';
+			$bccEmail = 'mandar.maske@xecurify.com';
+			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $adEmail . '" target="_blank">' . $adEmail . '</a></strong><br><br><strong>SSO URL: </strong>' . $ssoUrl . ' <br><br><strong>Auto created Users:</strong>' . $nousercreated . ' <br><br> <strong> No. of Authentication:</strong>' . $noauthentication . ' <br><br>  <strong>Test Configuration:</strong> ' . $testConfiguration . '<br><br><strong>Metadata Fetched/Uploaded:</strong> ' . $cause . '<br><br><strong> System Information: </strong>' . $query1 . '</div>';
+			$subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
+		}
+		elseif ($query == 'Manual IDP Configuration')
+		{
+			$ccEmail = 'nutan.barad@xecurify.com';
+			$bccEmail = 'mandar.maske@xecurify.com';
+			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $adEmail . '" target="_blank">' . $adEmail . '</a></strong><br><br><strong>SSO URL: </strong>' . $ssoUrl . ' <br><br><strong>Auto created Users:</strong>' . $nousercreated . ' <br><br> <strong> No. of Authentication:</strong>' . $noauthentication . ' <br><br>  <strong>Test Configuration:</strong> ' . $testConfiguration . '<br><br><strong>Manual IDP Configuration Saved:</strong> ' . $cause . '<br><br><strong> System Information: </strong>' . $query1 . '</div>';
+			$subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
+		}
+		else
+		{
+			$ccEmail = 'joomlasupport@xecurify.com';
+			$bccEmail = 'joomlasupport@xecurify.com';
+			$resolvedFeedbackEmail = !empty($feedbackEmail) ? $feedbackEmail : $fromEmail;
+			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :</strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank"></strong>' . $fromEmail . '</a><br><br><strong>Email :<a href="mailto:' . $resolvedFeedbackEmail . '" target="_blank">' . $resolvedFeedbackEmail . '</a></strong><br><br><strong>Plugin Deactivated: </strong>' . $query1 . '<br><br><strong>Reason: </strong>' . $query . '</div>';
+			$subject = "miniOrange Joomla SAML SP Free Feedback - " . $resolvedFeedbackEmail;
+		}
 
-    function get_customer_key($email, $password)
-    {
-        if (!Mo_saml_Local_Util::is_curl_installed()) {
-            return json_encode(array("apiKey" => 'CURL_ERROR', 'token' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'));
-        }
+		$fields = array(
+			'customerKey' => $customerKey,
+			'sendEmail' => true,
+			'email' => array(
+				'customerKey' 	=> $customerKey,
+				'fromEmail' 	=> $fromEmail,
+				'bccEmail' 		=> $bccEmail,
+				'fromName' 		=> 'miniOrange',
+				'toEmail' 		=> $ccEmail,
+				'toName' 		=> $bccEmail,
+				'subject' 		=> $subject,
+				'content' 		=> $content
+			),
+		);
+		$fieldString = json_encode($fields);
 
-        $hostname = Mo_saml_Local_Util::getHostname();
+		return self::curlCall($url, $fieldString, 0);
 
-        $url = $hostname . "/moas/rest/customer/key";
+	}
 
-        $fields = array(
-            'email' => $email,
-            'password' => $password
-        );
+	public static function installMailSent($email, $baseUrl)
+	{
 
-        $field_string = json_encode($fields);
+		$url = 'https://login.xecurify.com/moas/api/notify/send';
+		$customerKey = MoConstants::getDefaultCustomerKey();
+		$fromEmail = $email;
+		$phpVersion = phpversion();
+		$jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
+		$moPluginVersion = SAML_Utilities::getPluginVersion();
+		$osVersion    = SAML_Utilities::getOsInfo();
+		$serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
+		$webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
+		$pluginName    = (new Mo_Saml_Local_Customer)->pluginName($moPluginVersion);
+		$query1 = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' | PHP ' . $phpVersion . ' | OS ' . $osVersion . ' | Web Server: ' . $webServer . '] ';
+		$ccEmail = 'nutan.barad@xecurify.com';
+		$bccEmail = 'mandar.maske@xecurify.com';
+		$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong> System Information: </strong>' . $query1 . '</div>';
+		$subject = "Installation of Joomla SAML SP [Free]";
+		$fields = array(
+		'customerKey' => $customerKey,
+		'sendEmail' => true,
+		'email' => array(
+			'customerKey' 	=> $customerKey,
+			'fromEmail' 	=> $fromEmail,
+			'bccEmail' 		=> $bccEmail,
+			'fromName' 		=> 'miniOrange',
+			'toEmail' 		=> $ccEmail,
+			'toName' 		=> $bccEmail,
+			'subject' 		=> $subject,
+			'content' 		=> $content
+		),
+		);
+		$fieldString = json_encode($fields);
 
-        return self::curl_call($url,$field_string,0);
-    }
+		return self::curlCall($url, $fieldString, 0);
 
+	}
 
-    public static function submit_feedback_form($email, $phone, $query,$cause,$feedback_email = '')
-    {
+	public function submitContactUs($qEmail, $qPhone, $query, $clientTimezone = '', $clientTimezoneOffset = '')
+	{
+		if (!Mo_Saml_Local_Util::isCurlInstalled())
+		{
+			return json_encode(
+				array(
+					"status" => 'CURL_ERROR',
+					'statusMessage' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'
+				)
+			);
+		}
 
-        $url = 'https://login.xecurify.com/moas/api/notify/send';
+		$hostname = Mo_Saml_Local_Util::getHostname();
+		$url = $hostname . "/moas/rest/customer/contact-us";
+		$currentUser = Factory::getUser();
+		$phpVersion = phpversion();
+		$jVersion = new Version;
+		$jCmsVersion = $jVersion->getShortVersion();
+		$moPluginVersion = Mo_Saml_Local_Util::getPluginVersion();
+		$pluginName = (new Mo_Saml_Local_Customer)->pluginName($moPluginVersion);
+		$serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
+		$webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
+		$result = (new Mo_Saml_Local_Util)->loadDbValues('#__miniorange_saml_config');
+		$nousercreated = base64_decode($result['userslim']);
+		$testConfiguration = ($result['test_configuration'] == true) ? 'Successful' : 'Unsuccessful';
+		$osVersion    = SAML_Utilities::getOsInfo();
 
-        $customerKey = "16555";
-        $apiKey = "fFd2XcvTGDemZvbw1bcUesNJWEqKbbUq";
-        $fromEmail = $email;
-        $phpVersion = phpversion();
-        $jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
-        $moPluginVersion = SAML_Utilities::GetPluginVersion();
-        $os_version    = SAML_Utilities::_get_os_info();
-        $serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
-        $webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
-        $pluginName    = (new Mo_saml_Local_Customer)->pluginName($jCmsVersion);
-        $result        = (new Mo_saml_Local_Util)->_load_db_values('#__miniorange_saml_config');
-        $details       = (new Mo_saml_Local_Util)->_load_db_values('#__miniorange_saml_customer_details');
-        $ad_email       = isset($details ['email']) ? $details ['email'] : '';
-        $nousercreated=  base64_decode($result['userslim']);
-        $noauthentication=  base64_decode($result['sso_test']);
-        $SSO_URL = $result['single_signon_service_url'];
-        if($result['test_configuration']==true)
-        {
-            $testConfiguration= 'Successful';
-        }else if($noauthentication == 0)
-        {
-            $testConfiguration= 'Not tested';
-        }else
-        {
-            $testConfiguration='Unsuccessful';   
-        }
+		// Timezone: browser tz -> Joomla user tz -> global config offset -> UTC
+		$user = Factory::getUser();
+		$timezone = $user->getParam('timezone');
 
-        $SSO_Status = ($result['sso_status']==true)? 'Successful': 'Unsuccessful'; 
-        $query1 = '['.$pluginName.' | '.$moPluginVersion.' | PHP ' . $phpVersion.' | OS ' . $os_version.' | Web Server: ' . $webServer . '] ';
-        if($query=='Test Configuration')
-        {
-            $ccEmail='nutan.barad@xecurify.com'; 
-            $bccEmail='mandar.maske@xecurify.com';
-            $content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $ad_email . '" target="_blank">' . $ad_email . '</a></strong><br><br><strong>SSO URL: </strong>'.$SSO_URL.' <br><br><strong>Auto created Users:</strong>'.$nousercreated.' <br><br> <strong> No. of Authentication:</strong>'.$noauthentication.' <br><br>  <strong>Test Configuration:</strong> '.$testConfiguration .'<br><br><strong>Possible Cause:</strong> '.$cause .'<br><br><strong> System Information: </strong>' . $query1 . '</div>';
-            $subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
-        }
-        else if($query=='SSO Status')
-        {
-            $ccEmail='nutan.barad@xecurify.com'; 
-            $bccEmail='mandar.maske@xecurify.com';
-            $content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :</strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $ad_email . '" target="_blank">' . $ad_email . '</a></strong><br><br><strong>SSO URL: </strong>'.$SSO_URL.' <br><br><strong>Auto created Users:</strong>'.$nousercreated.' <br><br> <strong> No. of Authentication:</strong>'.$noauthentication.' <br><br> <strong>SSO Status:</strong> '.$SSO_Status .'<br><br><strong>Possible Cause:</strong> '.$cause .'<br><br><strong> System Information:</strong> ' . $query1 . '</div>';
-            $subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
-           
-        }
-        else if($query=='Metadata Fetched')
-        {
-            $ccEmail='nutan.barad@xecurify.com';
-            $bccEmail='mandar.maske@xecurify.com';
-            $content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $ad_email . '" target="_blank">' . $ad_email . '</a></strong><br><br><strong>SSO URL: </strong>'.$SSO_URL.' <br><br><strong>Auto created Users:</strong>'.$nousercreated.' <br><br> <strong> No. of Authentication:</strong>'.$noauthentication.' <br><br>  <strong>Test Configuration:</strong> '.$testConfiguration .'<br><br><strong>Metadata Fetched/Uploaded:</strong> '.$cause .'<br><br><strong> System Information: </strong>' . $query1 . '</div>';
-            $subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
-        }
-        else if($query=='Manual IDP Configuration')
-        {
-            $ccEmail='nutan.barad@xecurify.com';
-            $bccEmail='mandar.maske@xecurify.com';
-            $content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $ad_email . '" target="_blank">' . $ad_email . '</a></strong><br><br><strong>SSO URL: </strong>'.$SSO_URL.' <br><br><strong>Auto created Users:</strong>'.$nousercreated.' <br><br> <strong> No. of Authentication:</strong>'.$noauthentication.' <br><br>  <strong>Test Configuration:</strong> '.$testConfiguration .'<br><br><strong>Manual IDP Configuration Saved:</strong> '.$cause .'<br><br><strong> System Information: </strong>' . $query1 . '</div>';
-            $subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
-        }
-        else
-        {
-            $ccEmail='joomlasupport@xecurify.com';
-            $bccEmail='joomlasupport@xecurify.com';
-            $content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :</strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank"></strong>' . $fromEmail . '</a><br><br><strong>Email :<a href="mailto:' . $ad_email . '" target="_blank"></strong>' . $ad_email . '</a><br><br><strong>Plugin Deactivated: </strong>' . $query1 . '<br><br><strong>Reason: </strong>' . $query . '<br><br><strong>Auto created Users:</strong>'.$nousercreated.' <br><br> <strong> No. of Authentication:</strong>'.$noauthentication.' <br><br> <strong>Test Configuration:</strong> '.$testConfiguration .'</div>';   
-            $feedbackEmail = !empty($feedback_email) ? $feedback_email : $fromEmail;
-            $subject = "miniOrange Joomla SAML SP Free Feedback - " . $feedbackEmail;
-        }
-       
+		if (empty($timezone))
+		{
+			try
+			{
+				$config = Factory::getConfig();
+				$timezone = $config->get('offset');
+			}
+			catch (\Throwable $e)
+			{
+				$timezone = null;
+			}
+		}
 
-        $fields = array(
-            'customerKey' => $customerKey,
-            'sendEmail' => true,
-            'email' => array(
-                'customerKey' 	=> $customerKey,
-                'fromEmail' 	=> $fromEmail,
-                'bccEmail' 		=> $bccEmail,
-                'fromName' 		=> 'miniOrange',
-                'toEmail' 		=> $ccEmail,
-                'toName' 		=> $bccEmail,
-                'subject' 		=> $subject,
-                'content' 		=> $content
-            ),
-        );
-        $field_string = json_encode($fields);
+		$tzName = trim((string) $clientTimezone);
 
-        return self::curl_call($url,$field_string,0);
+		if ($tzName === '')
+		{
+			$tzName = (string) $timezone;
+		}
 
-    }
+		if (trim($tzName) === '')
+		{
+			$tzName = 'UTC';
+		}
 
-        public static function install_mail_sent($email,$base_url){
+		$utcOffset = '';
+		$tzOffsetMinutes = trim((string) $clientTimezoneOffset);
 
-        $url = 'https://login.xecurify.com/moas/api/notify/send';
-        $customerKey = "16555";
-        $apiKey = "fFd2XcvTGDemZvbw1bcUesNJWEqKbbUq";
-        $fromEmail = $email;
-        $phpVersion = phpversion();
-        $jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
-        $moPluginVersion = SAML_Utilities::GetPluginVersion();
-        $os_version    = SAML_Utilities::_get_os_info();
-        $serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
-        $webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
-        $pluginName    = (new Mo_saml_Local_Customer)->pluginName($jCmsVersion);
-        $query1 = '['.$pluginName.' | '.$moPluginVersion.' | PHP ' . $phpVersion.' | OS ' . $os_version.' | Web Server: ' . $webServer . '] ';
-        $ccEmail='nutan.barad@xecurify.com'; 
-        $bccEmail='mandar.maske@xecurify.com';
-        $content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong> System Information: </strong>' . $query1 . '</div>';
-        $subject = "Installation of Joomla SAML SP [Free]";
-        $fields = array(
-            'customerKey' => $customerKey,
-            'sendEmail' => true,
-            'email' => array(
-                'customerKey' 	=> $customerKey,
-                'fromEmail' 	=> $fromEmail,
-                'bccEmail' 		=> $bccEmail,
-                'fromName' 		=> 'miniOrange',
-                'toEmail' 		=> $ccEmail,
-                'toName' 		=> $bccEmail,
-                'subject' 		=> $subject,
-                'content' 		=> $content
-            ),
-        );
-        $field_string = json_encode($fields);
+		if ($tzOffsetMinutes !== '' && preg_match('/^-?\d+$/', $tzOffsetMinutes))
+		{
+			$m = (int) $tzOffsetMinutes;
+			$sign = $m > 0 ? '-' : '+';
+			$abs = abs($m);
+			$hh = str_pad((string) floor($abs / 60), 2, '0', STR_PAD_LEFT);
+			$mm = str_pad((string) ($abs % 60), 2, '0', STR_PAD_LEFT);
+			$utcOffset = $sign . $hh . ':' . $mm;
+		}
+		else
+		{
+			try
+			{
+				$tzObj = new \DateTimeZone($tzName);
+				$dt = new \DateTime('now', $tzObj);
+				$offsetSeconds = (int) $dt->getOffset();
+				$sign = $offsetSeconds >= 0 ? '+' : '-';
+				$abs = abs($offsetSeconds);
+				$hh = str_pad((string) floor($abs / 3600), 2, '0', STR_PAD_LEFT);
+				$mm = str_pad((string) floor(($abs % 3600) / 60), 2, '0', STR_PAD_LEFT);
+				$utcOffset = $sign . $hh . ':' . $mm;
+			}
+			catch (\Exception $e)
+			{
+				$utcOffset = '+00:00';
+				$tzName = 'UTC';
+			}
+		}
 
-        return self::curl_call($url,$field_string,0);
+		$userTimezone = $utcOffset !== '' ? $tzName . ' (' . $utcOffset . ')' : $tzName;
 
-    }
+		$query = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' ] PHP ' . $phpVersion . ' | OS ' . $osVersion . ' | Web Server: ' . $webServer . ' | Timezone: ' . $userTimezone . ' | Auto created Users: ' . $nousercreated . ' | Test Configuration:' . $testConfiguration . ' || Query :' . $query;
 
-    function submit_contact_us($q_email, $q_phone, $query, $client_timezone = '', $client_timezone_offset = '')
-    {
-        if (!Mo_saml_Local_Util::is_curl_installed()) {
-            return json_encode(array("status" => 'CURL_ERROR', 'statusMessage' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'));
-        }
-       
-        $hostname = Mo_saml_Local_Util::getHostname();
-        $url = $hostname . "/moas/rest/customer/contact-us";
-        $current_user = Factory::getUser();
-        $phpVersion = phpversion();
-        $jVersion = new Version;
-        $jCmsVersion = $jVersion->getShortVersion();
-        $moPluginVersion = Mo_saml_Local_Util::GetPluginVersion();
-        $pluginName = (new Mo_saml_Local_Customer)->pluginName($jCmsVersion);
-        $serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
-        $webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
-        $result = (new Mo_saml_Local_Util)->_load_db_values('#__miniorange_saml_config');
-        $nousercreated= base64_decode($result['userslim']);
-        $testConfiguration = ($result['test_configuration']==true)? 'Successful': 'Unsuccessful';
-        $os_version    = SAML_Utilities::_get_os_info();
+		$fields = array(
+			'firstName' => $currentUser->username,
+			'company' => $_SERVER['SERVER_NAME'],
+			'email' => $qEmail,
+			'ccEmail' => 'joomlasupport@xecurify.com',
+			'phone' => $qPhone,
+			'query' => $query
+		);
+		$fieldString = json_encode($fields);
 
-        // Timezone: browser tz -> Joomla user tz -> global config offset -> UTC
-        $user = Factory::getUser();
-        $timezone = $user->getParam('timezone');
-        if (empty($timezone)) {
-            try {
-                $config = Factory::getConfig();
-                $timezone = $config->get('offset');
-            } catch (\Throwable $e) {
-                $timezone = null;
-            }
-        }
-        $tzName = trim((string) $client_timezone);
-        if ($tzName === '') {
-            $tzName = (string) $timezone;
-        }
-        if (trim($tzName) === '') {
-            $tzName = 'UTC';
-        }
-        $utcOffset = '';
-        $tzOffsetMinutes = trim((string) $client_timezone_offset);
-        if ($tzOffsetMinutes !== '' && preg_match('/^-?\d+$/', $tzOffsetMinutes)) {
-            $m = (int) $tzOffsetMinutes;
-            $sign = $m > 0 ? '-' : '+';
-            $abs = abs($m);
-            $hh = str_pad((string) floor($abs / 60), 2, '0', STR_PAD_LEFT);
-            $mm = str_pad((string) ($abs % 60), 2, '0', STR_PAD_LEFT);
-            $utcOffset = $sign . $hh . ':' . $mm;
-        } else {
-            try {
-                $tzObj = new \DateTimeZone($tzName);
-                $dt = new \DateTime('now', $tzObj);
-                $offsetSeconds = (int) $dt->getOffset();
-                $sign = $offsetSeconds >= 0 ? '+' : '-';
-                $abs = abs($offsetSeconds);
-                $hh = str_pad((string) floor($abs / 3600), 2, '0', STR_PAD_LEFT);
-                $mm = str_pad((string) floor(($abs % 3600) / 60), 2, '0', STR_PAD_LEFT);
-                $utcOffset = $sign . $hh . ':' . $mm;
-            } catch (\Exception $e) {
-                $utcOffset = '+00:00';
-                $tzName = 'UTC';
-            }
-        }
-        $userTimezone = $utcOffset !== '' ? $tzName . ' (' . $utcOffset . ')' : $tzName;
+		return self::curlCall($url, $fieldString, 1);
+	}
 
-        $query = '['.$pluginName.' | ' . $moPluginVersion . ' ] PHP ' . $phpVersion.' | OS '.$os_version.' | Web Server: ' . $webServer . ' | Timezone: ' . $userTimezone . ' | Auto created Users: ' . $nousercreated. ' | Test Configuration:'.$testConfiguration .' || Query :' . $query ;
-        
+	public function sendOtpToken($authType, $phone)
+	{
 
-        $fields = array(
-            'firstName' => $current_user->username,
-            'company' => $_SERVER['SERVER_NAME'],
-            'email' => $q_email,
-            'ccEmail' => 'joomlasupport@xecurify.com',
-            'phone' => $q_phone,
-            'query' => $query
-        );
-        $field_string = json_encode($fields);
+		if (!Mo_Saml_Local_Util::isCurlInstalled())
+		{
+			return json_encode(
+				array(
+					"status" => 'CURL_ERROR',
+					'statusMessage' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'
+				)
+			);
+		}
 
-        return self::curl_call($url,$field_string,1);
-    }
+		$customerDetails = (new Mo_Saml_Local_Util)->loadDbValues('#__miniorange_saml_customer_details');
+		$hostname = Mo_Saml_Local_Util::getHostname();
+		$url = $hostname . '/moas/api/auth/challenge';
+		$username = $customerDetails['email'];
 
-    function send_otp_token($auth_type, $phone)
-    {
+		if ($authType == "EMAIL")
+		{
+			$fields = array(
+				'customerKey' => MoConstants::getDefaultCustomerKey(),
+				'email' => $username,
+				'authType' => $authType,
+				'transactionName' => 'Joomla SAML 2.0 SP SSO Plugin'
+			);
+		}
+		else
+		{
+			$fields = array(
+				'customerKey' => MoConstants::getDefaultCustomerKey(),
+				'phone' => $phone,
+				'authType' => $authType,
+				'transactionName' => 'Joomla SAML 2.0 SP SSO Plugin'
+			);
+		}
 
-      
-        if (!Mo_saml_Local_Util::is_curl_installed()) {
-            return json_encode(array("status" => 'CURL_ERROR', 'statusMessage' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'));
-        }
-        $customer_details = (new Mo_saml_Local_Util)->_load_db_values('#__miniorange_saml_customer_details');
-        $hostname = Mo_saml_Local_Util::getHostname();
-        $url = $hostname . '/moas/api/auth/challenge';
-        $username=$customer_details['email'];
-        if ($auth_type == "EMAIL") {
-            $fields = array(
-                'customerKey' => $this->defaultCustomerKey,
-                'email' => $username,
-                'authType' => $auth_type,
-                'transactionName' => 'Joomla SAML 2.0 SP SSO Plugin'
-            );
-        } else {
-            $fields = array(
-                'customerKey' => $this->defaultCustomerKey,
-                'phone' => $phone,
-                'authType' => $auth_type,
-                'transactionName' => 'Joomla SAML 2.0 SP SSO Plugin'
-            );
-        }
-        $field_string = json_encode($fields);
+		$fieldString = json_encode($fields);
 
-        return self::curl_call($url,$field_string,0);
-    }
+		return self::curlCall($url, $fieldString, 0);
+	}
 
-    function validate_otp_token($transactionId, $otpToken)
-    {
-        if (!Mo_saml_Local_Util::is_curl_installed()) {
-            return json_encode(array("status" => 'CURL_ERROR', 'statusMessage' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'));
-        }
-        $hostname = Mo_saml_Local_Util::getHostname();
-        $url = $hostname . '/moas/api/auth/validate';
-        $fields = '';
+	public function validateOtpToken($transactionId, $otpToken)
+	{
+		if (!Mo_Saml_Local_Util::isCurlInstalled())
+		{
+			return json_encode(
+				array(
+					"status" => 'CURL_ERROR',
+					'statusMessage' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'
+				)
+			);
+		}
 
-        $fields = array(
-            'txId' => $transactionId,
-            'token' => $otpToken,
-        );
+		$hostname = Mo_Saml_Local_Util::getHostname();
+		$url = $hostname . '/moas/api/auth/validate';
+		$fields = '';
 
-        $field_string = json_encode($fields);
+		$fields = array(
+			'txId' => $transactionId,
+			'token' => $otpToken,
+		);
 
-        return self::curl_call($url,$field_string,0);
-    }
+		$fieldString = json_encode($fields);
 
-    function check_customer($email)
-    {
-        if (!Mo_saml_Local_Util::is_curl_installed()) {
-            return json_encode(array("status" => 'CURL_ERROR', 'statusMessage' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'));
-        }
-        $hostname = Mo_saml_Local_Util::getHostname();
-        $url = $hostname . "/moas/rest/customer/check-if-exists";
+		return self::curlCall($url, $fieldString, 0);
+	}
 
-        $fields = array(
-            'email' => $email,
-        );
-        $field_string = json_encode($fields);
+	public function checkCustomer($email)
+	{
+		if (!Mo_Saml_Local_Util::isCurlInstalled())
+		{
+			return json_encode(
+				array(
+					"status" => 'CURL_ERROR',
+					'statusMessage' => '<a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'
+				)
+			);
+		}
 
-        return self::curl_call($url,$field_string,0);
-    }
+		$hostname = Mo_Saml_Local_Util::getHostname();
+		$url = $hostname . "/moas/rest/customer/check-if-exists";
 
-    function request_for_trial($email, $plan,$demo,$description = '')
-    {
-        $url = 'https://login.xecurify.com/moas/api/notify/send';
-        $customerKey = "16555";
-        $apiKey = "fFd2XcvTGDemZvbw1bcUesNJWEqKbbUq";
-        $fromEmail = $email;
-        $subject = 'miniOrange Joomla SAML SP Request for '.$demo;
-        $phpVersion = phpversion();
-        $jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
-        $moPluginVersion = SAML_Utilities::GetPluginVersion();
-        $pluginName = (new Mo_saml_Local_Customer)->pluginName($jCmsVersion);
-        $serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
-        $webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
-        $pluginInfo = '['.$pluginName.' | '.$moPluginVersion.' | PHP ' . $phpVersion.' | Web Server: ' . $webServer . '] : ' .$plan;
+		$fields = array(
+			'email' => $email,
+		);
+		$fieldString = json_encode($fields);
 
-        $content = '<div >Hello, <br>
+		return self::curlCall($url, $fieldString, 0);
+	}
+
+	public function requestForTrial($email, $plan, $demo, $description = '')
+	{
+		$url = 'https://login.xecurify.com/moas/api/notify/send';
+		$customerKey = MoConstants::getDefaultCustomerKey();
+		$fromEmail = $email;
+		$subject = 'miniOrange Joomla SAML SP Request for ' . $demo;
+		$phpVersion = phpversion();
+		$jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
+		$moPluginVersion = SAML_Utilities::getPluginVersion();
+		$pluginName = (new Mo_Saml_Local_Customer)->pluginName($moPluginVersion);
+		$serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
+		$webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
+		$pluginInfo = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' | PHP ' . $phpVersion . ' | Web Server: ' . $webServer . '] : ' . $plan;
+
+		$content = '<div >Hello, <br>
                         <br><strong>Company :</strong><a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" >' . $_SERVER['SERVER_NAME'] . '</a><br><br>
                         <strong>Email :</strong><a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a><br><br>
-                        <strong>Plugin Info: </strong>'.$pluginInfo.'<br><br>
+                        <strong>Plugin Info: </strong>' . $pluginInfo . '<br><br>
                         <strong>Description: </strong>' . $description . '</div>';
 
-        $fields = array(
-            'customerKey' => $this->defaultCustomerKey,
-            'sendEmail' => true,
-            'email' => array(
-                'customerKey' =>$this->defaultCustomerKey,
-                'fromEmail' => $fromEmail,
-                'fromName' => 'miniOrange',
-                'toEmail' => 'joomlasupport@xecurify.com',
-                'toName' => 'joomlasupport@xecurify.com',
-                'subject' => $subject,
-                'content' => $content
-            ),
-        );
-        $field_string = json_encode($fields);
+		$fields = array(
+			'customerKey' => MoConstants::getDefaultCustomerKey(),
+			'sendEmail' => true,
+			'email' => array(
+				'customerKey' => MoConstants::getDefaultCustomerKey(),
+				'fromEmail' => $fromEmail,
+				'fromName' => 'miniOrange',
+				'toEmail' => 'joomlasupport@xecurify.com',
+				'toName' => 'joomlasupport@xecurify.com',
+				'subject' => $subject,
+				'content' => $content
+			),
+		);
+		$fieldString = json_encode($fields);
 
-        return self::curl_call($url,$field_string,0);
-    }
+		return self::curlCall($url, $fieldString, 0);
+	}
 
-    function request_for_setupCall($email, $query, $description, $callDate, $timeZone)
-    {
-        $url = 'https://login.xecurify.com/moas/api/notify/send';
-        $customerKey = "16555";
-        $apiKey = "fFd2XcvTGDemZvbw1bcUesNJWEqKbbUq";
-        $fromEmail = $email;
-        $subject = "miniOrange Joomla SAML SP Free - Screen Share/Call Request";
-        $phpVersion = phpversion();
-        $jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
-        $moPluginVersion = SAML_Utilities::GetPluginVersion();
-        $pluginName = (new Mo_saml_Local_Customer)->pluginName($jCmsVersion);
-        $serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
-        $webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
+	public function requestForSetupCall($email, $query, $description, $callDate, $timeZone)
+	{
+		$url = 'https://login.xecurify.com/moas/api/notify/send';
+		$customerKey = MoConstants::getDefaultCustomerKey();
+		$fromEmail = $email;
+		$subject = "miniOrange Joomla SAML SP Free - Screen Share/Call Request";
+		$phpVersion = phpversion();
+		$jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
+		$moPluginVersion = SAML_Utilities::getPluginVersion();
+		$pluginName = (new Mo_Saml_Local_Customer)->pluginName($moPluginVersion);
+		$serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
+		$webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
 
-        $pluginInfo = '['.$pluginName.' | '.$moPluginVersion.' | PHP ' . $phpVersion.' | Web Server: ' . $webServer . '] : ';
+		$pluginInfo = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' | PHP ' . $phpVersion . ' | Web Server: ' . $webServer . '] : ';
 
-        $content = '<div>Hello, <br><br>
+		$content = '<div>Hello, <br><br>
                         <strong>Company :</strong><a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" >' . $_SERVER['SERVER_NAME'] . '</a><br><br>
-                        <strong>Plugin Info: </strong>'.$pluginInfo.'<br><br>
+                        <strong>Plugin Info: </strong>' . $pluginInfo . '<br><br>
                         <strong>Email :</strong><a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a><br><br>
                         <strong>Time Zone:</strong> ' . $timeZone . '<br><br><strong>Date to set up call: </strong>' . $callDate . '<br><br>
                         <strong>Issue : </strong>' . $query . '<br><br>
                         <strong>Description:</strong> ' . $description . '</div>';
 
-        $fields = array(
-            'customerKey' => $customerKey,
-            'sendEmail' => true,
-            'email' => array(
-                'customerKey' => $customerKey,
-                'fromEmail' => $fromEmail,
-                'fromName' => 'miniOrange',
-                'toEmail' => 'joomlasupport@xecurify.com',
-                'toName' => 'joomlasupport@xecurify.com',
-                'subject' => $subject,
-                'content' => $content
-            ),
-        );
-        $field_string = json_encode($fields);
+		$fields = array(
+			'customerKey' => $customerKey,
+			'sendEmail' => true,
+			'email' => array(
+				'customerKey' => $customerKey,
+				'fromEmail' => $fromEmail,
+				'fromName' => 'miniOrange',
+				'toEmail' => 'joomlasupport@xecurify.com',
+				'toName' => 'joomlasupport@xecurify.com',
+				'subject' => $subject,
+				'content' => $content
+			),
+		);
+		$fieldString = json_encode($fields);
 
+		return self::curlCall($url, $fieldString, 0);
+	}
 
-        return self::curl_call($url,$field_string,0);
-    }
+	public function pluginName($moPluginVersion)
+	{
+		if (MoConstants::MO_SAML_SP == "ALL")
+		{
+			$pluginName = 'Joomla SAML SP Free Plugin ' . $moPluginVersion . '';
+		}
+		elseif (MoConstants::MO_SAML_SP == "ADFS")
+		{
+			$pluginName = 'Joomla SAML SP Free Plugin - Login with ADFS ' . $moPluginVersion . '';
+		}
+		elseif (MoConstants::MO_SAML_SP == "GOOGLEAPPS")
+		{
+			$pluginName = 'Joomla SAML SP Free Plugin - Login with Google Apps ' . $moPluginVersion . '';
+		}
 
-    function pluginName($jCmsVersion)
-    {
-        if(MoConstants::MO_SAML_SP == "ALL")
-        {
-            $pluginName = 'Joomla SAML SP Free Plugin '.$jCmsVersion.'';
-        }
-        elseif(MoConstants::MO_SAML_SP == "ADFS")
-        {
-            $pluginName = 'Joomla SAML SP Free Plugin - Login with ADFS '.$jCmsVersion.'';
-        }
-        elseif (MoConstants::MO_SAML_SP == "GOOGLEAPPS")
-        {
-            $pluginName = 'Joomla SAML SP Free Plugin - Login with Google Apps '.$jCmsVersion.'';
-        }
-        return $pluginName;
-    }
+		return $pluginName;
+	}
 
-    public static function curl_call($url,$field_string,$proxy_needed)
-    {
-        $ch = curl_init($url);
-        $customer_details = (new Mo_saml_Local_Util)->_load_db_values('#__miniorange_saml_customer_details');
-        $customerKey = !empty($customer_details['customer_key'])?$customer_details['customer_key']:'16555';
-        $apiKey = !empty($customer_details['api_key'])?$customer_details['api_key']:'fFd2XcvTGDemZvbw1bcUesNJWEqKbbUq';
-        /* Current time in milliseconds since midnight, January 1, 1970 UTC. */
-        $currentTimeInMillis = round(microtime(true) * 1000);
-     
-        /* Creating the Hash using SHA-512 algorithm */
-        $stringToHash = $customerKey . number_format($currentTimeInMillis, 0, '', '') . $apiKey;
-        $hashValue = hash("sha512", $stringToHash);
+	public static function curlCall($url, $fieldString, $proxyNeeded)
+	{
+		$ch = curl_init($url);
+		$credentials = self::resolveCloudApiCredentials();
+		$customerKey = $credentials['customerKey'];
+		$apiKey = $credentials['apiKey'];
 
-        $customerKeyHeader = "Customer-Key: " . $customerKey;
-        $timestampHeader = "Timestamp: " . number_format($currentTimeInMillis, 0, '', '');
-        $authorizationHeader = "Authorization: " . $hashValue;
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_ENCODING, "");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_AUTOREFERER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);    # required for https urls
+		// Current time in milliseconds since midnight, January 1, 1970 UTC.
 
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json", $customerKeyHeader,
-            $timestampHeader, $authorizationHeader));
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $field_string);
-        if($proxy_needed)
-        {
-            $proxy=(new Mo_saml_Local_Util)->_load_db_values('#__miniorange_saml_proxy_setup');
-            $proxy_host_name = isset($proxy['proxy_host_name']) ? $proxy['proxy_host_name'] : '';
-            $port_number = isset($proxy['port_number']) ? $proxy['port_number'] : '';
-            $username = isset($proxy['username']) ? $proxy['username'] : '';
-            $password = isset($proxy['password']) ? base64_decode($proxy['password']) : '';
-    
-            if (!empty($proxy_host_name)) {
-                curl_setopt($ch, CURLOPT_PROXY, $proxy_host_name);
-                curl_setopt($ch, CURLOPT_PROXYPORT, $port_number);
-                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $username . ':' . $password);
-            }
-        }
-        $content = curl_exec($ch);
-        if ($content === false) {
-            $curlError = curl_error($ch);
-            curl_close($ch);
-            return json_encode(array(
-                'status' => 'Error',
-                'message' => 'Request Error: ' . $curlError,
-            ));
-        }
-        curl_close($ch);
-        return $content;
-    }
+		$currentTimeInMillis = round(microtime(true) * 1000);
+
+		// Creating the Hash using SHA-512 algorithm
+
+		$stringToHash = $customerKey . number_format($currentTimeInMillis, 0, '', '') . $apiKey;
+		$hashValue = hash("sha512", $stringToHash);
+
+		$customerKeyHeader = "Customer-Key: " . $customerKey;
+		$timestampHeader = "Timestamp: " . number_format($currentTimeInMillis, 0, '', '');
+		$authorizationHeader = "Authorization: " . $hashValue;
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_ENCODING, "");
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_AUTOREFERER, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+		curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json", $customerKeyHeader,
+			$timestampHeader, $authorizationHeader)
+		);
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldString);
+
+		if ($proxyNeeded)
+		{
+			$proxy = (new Mo_Saml_Local_Util)->loadDbValues('#__miniorange_saml_proxy_setup');
+			$proxyHostName = isset($proxy['proxy_host_name']) ? $proxy['proxy_host_name'] : '';
+			$portNumber = isset($proxy['port_number']) ? $proxy['port_number'] : '';
+			$username = isset($proxy['username']) ? $proxy['username'] : '';
+			$password = isset($proxy['password']) ? base64_decode($proxy['password']) : '';
+
+			if (!empty($proxyHostName))
+			{
+				curl_setopt($ch, CURLOPT_PROXY, $proxyHostName);
+				curl_setopt($ch, CURLOPT_PROXYPORT, $portNumber);
+				curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+				curl_setopt($ch, CURLOPT_PROXYUSERPWD, $username . ':' . $password);
+			}
+		}
+
+		$content = curl_exec($ch);
+
+		if ($content === false)
+		{
+			$curlError = curl_error($ch);
+			curl_close($ch);
+
+			return json_encode(
+				array(
+					'status' => 'Error',
+					'message' => 'Request Error: ' . $curlError,
+				)
+			);
+		}
+
+		curl_close($ch);
+
+		return $content;
+	}
+
+	/**
+	 * Resolve miniOrange cloud API credentials from the database or configured defaults.
+	 *
+	 * @return  array
+	 */
+	private static function resolveCloudApiCredentials()
+	{
+		$customerDetails = (new Mo_Saml_Local_Util)->loadDbValues('#__miniorange_saml_customer_details');
+
+		if (!Mo_Saml_Local_Util::isCustomerRegistered())
+		{
+			return array(
+				'customerKey' => MoConstants::getDefaultCustomerKey(),
+				'apiKey' => MoConstants::getDefaultApiKey(),
+			);
+		}
+
+		return array(
+			'customerKey' => $customerDetails['customer_key'],
+			'apiKey' => $customerDetails['api_key'],
+		);
+	}
 }
