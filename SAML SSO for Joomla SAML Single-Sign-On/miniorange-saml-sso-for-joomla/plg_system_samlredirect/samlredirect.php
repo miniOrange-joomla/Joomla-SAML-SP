@@ -19,6 +19,8 @@ use Joomla\CMS\User\User;
 use Joomla\CMS\User\UserHelper;
 use Joomla\CMS\String\PunycodeHelper;
 use Joomla\CMS\Installer\Installer;
+use Joomla\CMS\Session\Session;
+use Joomla\CMS\HTML\HTMLHelper;
 $lang = Factory::getLanguage();
 $lang->load('plg_system_samlredirect', JPATH_ADMINISTRATOR);
 
@@ -127,14 +129,6 @@ class PlgSystemSamlredirect extends CMSPlugin
 
 		if ($mailSent == 0)
 		{
-			$mailSent = 1;
-			require_once JPATH_BASE . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo-saml-customer-setup.php';
-
-			$baseUrl = Uri::root();
-			$adminUser = SAML_Utilities::getSuperUser();
-			$user = User::getInstance($adminUser);
-			$adminEmail = $user->email;
-			Mo_Saml_Local_Customer::installMailSent($adminEmail, $baseUrl);
 			$databaseName = '#__miniorange_saml_customer_details';
 			$updatefieldsarray = array(
 			'mail_sent' => 1,
@@ -145,6 +139,15 @@ class PlgSystemSamlredirect extends CMSPlugin
 
 		if (isset($post['mojsp_feedback']) || isset($post['mojspfree_skip_feedback']))
 		{
+			$app     = Factory::getApplication();
+			$user    = Factory::getUser();
+			$isAdmin = method_exists($app, 'isClient') ? $app->isClient('administrator') : $app->isAdmin();
+
+			if (!$isAdmin || $user->guest || !$user->authorise('core.manage', 'com_installer') || !Session::checkToken())
+			{
+				return;
+			}
+
 			if ($tab)
 			{
 				$radio = isset($post['deactivate_plugin']) ? $post['deactivate_plugin'] : '';
@@ -169,12 +172,7 @@ class PlgSystemSamlredirect extends CMSPlugin
 				$adminPhone = $customerResult['admin_phone'];
 				$data1 = $radio . ' : ' . $data;
 
-				if (isset($post['mojspfree_skip_feedback']))
-				{
-					$data1 = 'Skipped the feedback';
-				}
-
-				if (file_exists(JPATH_BASE . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo-saml-customer-setup.php'))
+				if (!isset($post['mojspfree_skip_feedback']) && file_exists(JPATH_BASE . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo-saml-customer-setup.php'))
 				{
 					require_once JPATH_BASE . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo-saml-customer-setup.php';
 
@@ -301,16 +299,18 @@ class PlgSystemSamlredirect extends CMSPlugin
 							?>
 							  <link rel="stylesheet" type="text/css" href="<?php echo Uri::base();?>/components/com_miniorange_saml/assets/css/mo_saml_style.css" />
 								<div class="form-style-6 " style="width:35% !important; margin-left:33%; margin-top: 4%;">
-									<form name="f" method="post" action="" id="mojspfree_feedback_form_close" style="display:inline;">
-										   <h1><?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_14');?> 
+								<form name="f" method="post" action="" id="mojspfree_feedback_form_close" style="display:inline;">
+									<?php echo HTMLHelper::_('form.token'); ?>
+									   <h1><?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_14');?> 
 										<input type="hidden" name="mojspfree_skip_feedback" value="mojspfree_skip_feedback"/>
 										<button type="button" class="mojsp-close-btn" onClick="skipSAMLSPForm()" title="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_SKIP_BTN'); ?>" aria-label="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_SKIP_BTN'); ?>" style="cursor:pointer;font-size:36px;color:#fff;margin-left:6px;background:none;border:none;padding:0;line-height:1;display:inline-flex;align-items:center;">&times;</button>
 										<?php
 										$this->renderFeedbackHiddenIds($tpostData['cid']);
 										?>
 									</h1></form>
-									<form name="f" method="post" action="" id="mojsp_feedback" style="background: #f3f1f1; padding: 10px;">
-										<h3><?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_15');?> </h3>
+								<form name="f" method="post" action="" id="mojsp_feedback" style="background: #f3f1f1; padding: 10px;">
+									<?php echo HTMLHelper::_('form.token'); ?>
+									<h3><?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_15');?> </h3>
 										<input type="hidden" name="mojsp_feedback" value="mojsp_feedback"/>
 										<div>
 											<p style="margin-left:2%">
@@ -669,6 +669,11 @@ class PlgSystemSamlredirect extends CMSPlugin
 			$post = Factory::getApplication()->input->post->getArray();
 		}
 
+		foreach (array('quick_fix_cert', 'expected_cert', 'fix_issuer_issue', 'quick_fix_attributes') as $tamperKey)
+		{
+			unset($post[$tamperKey]);
+		}
+
 		$obj = new Mo_Saml_Local_Util;
 
 		if (!defined('_JDEFINES'))
@@ -677,36 +682,6 @@ class PlgSystemSamlredirect extends CMSPlugin
 		}
 
 		require_once JPATH_BASE . '/includes/framework.php';
-
-		if (isset($post['fix_issuer_issue']) && $post['fix_issuer_issue'] == 'true')
-		{
-			$databaseName = '#__miniorange_saml_customer_details';
-
-			if (isset($post['type']) && $post['type'] == 'change_sp_id')
-			{
-				$updatefieldsarray = array(
-					'sp_entity_id' => ($post['issuer']),
-				);
-				$obj->genericUpdateQuery($databaseName, $updatefieldsarray);
-			}
-			elseif (isset($post['type']) && $post['type'] == 'change_idp_id')
-			{
-				$updatefieldsarray = array(
-					'idp_entity_id' => ($post['issuer']),
-				);
-				$obj->genericUpdateQuery($databaseName, $updatefieldsarray);
-			}
-		}
-
-		if (isset($post['quick_fix_cert']) && ($post['quick_fix_cert'] == 'true'))
-		{
-			$cert = isset($post['expected_cert']) ? $post['expected_cert'] : '';
-			$databaseName = '#__miniorange_saml_config';
-			$updatefieldsarray = array(
-				'certificate' => $cert,
-			);
-			$obj->genericUpdateQuery($databaseName, $updatefieldsarray);
-		}
 
 		$authBase = JPATH_BASE . DIRECTORY_SEPARATOR . 'plugins' . DIRECTORY_SEPARATOR . 'authentication' . DIRECTORY_SEPARATOR . 'miniorangesaml';
 		include_once $authBase . DIRECTORY_SEPARATOR . 'saml2' . DIRECTORY_SEPARATOR . 'Response.php';
@@ -844,56 +819,13 @@ class PlgSystemSamlredirect extends CMSPlugin
 
 		$acsUrl = $spBaseUrl . '?morequest=acs';
 
-		$certFromPlugin = $attribute['certificate'];
-
-		if (!empty($certFromPlugin))
-		{
-			$certFromPlugin = SAML_Utilities::sanitizeCertificate($certFromPlugin);
-		}
-
-		$certfpFromPlugin = XMLSecurityKey::getRawThumbprint($certFromPlugin);
+		$certFromPlugin = isset($attribute['certificate']) ? $attribute['certificate'] : '';
 
 		try
 		{
 			$samlResponse = new SAML2_Response($samlResponseXml);
 
-			$responseSignatureData = $samlResponse->getSignatureData();
-
-			$assertionSignatureData = current($samlResponse->getAssertions())->getSignatureData();
-
-			// Convert to UTF-8 character encoding
-
-			$certfpFromPlugin = iconv("UTF-8", "CP1252//IGNORE", $certfpFromPlugin);
-
-			// Remove whitespaces
-
-			$certfpFromPlugin = preg_replace('/\s+/', '', $certfpFromPlugin);
-
-			// /* Validate signature */
-			if (!empty($certfpFromPlugin))
-			{
-				if (!empty($responseSignatureData))
-				{
-					$validSignature = SAML_Utilities::processResponse($acsUrl, $certfpFromPlugin, $responseSignatureData, $samlResponse, $certFromPlugin, $relayState, $post);
-
-					if ($validSignature === false)
-					{
-						echo '' . Text::_('PLG_SYSTEM_SAMLREDIRECT_INVALID_SIGN_RESP') . '';
-						exit;
-					}
-				}
-
-				if (!empty($assertionSignatureData))
-				{
-					$validSignature = SAML_Utilities::processResponse($acsUrl, $certfpFromPlugin, $assertionSignatureData, $samlResponse, $certFromPlugin, $relayState, $post);
-
-					if ($validSignature === false)
-					{
-						echo '' . Text::_('PLG_SYSTEM_SAMLREDIRECT_INVALID_SIGN_ASSERTION') . '';
-						exit;
-					}
-				}
-			}
+			SAML_Utilities::validateAndVerifySamlSignatures($samlResponse, $acsUrl, $certFromPlugin, $relayState, $post);
 
 			$db = MoSamlDbHelper::getDb();
 			$appdata = new Mo_Saml_Local_Util;
@@ -925,21 +857,6 @@ class PlgSystemSamlredirect extends CMSPlugin
 			else
 			{
 				$posts = Factory::getApplication()->input->post->getArray();
-			}
-
-			if (isset($posts['quick_fix_attributes']) && ($posts['quick_fix_attributes'] == 'true'))
-			{
-				foreach ($attrs as $attr)
-				{
-					if (filter_var($attr[0], FILTER_VALIDATE_EMAIL))
-					{
-						$username = $attr[0];
-					}
-				}
-
-				$session = Factory::getSession();
-				$session->set('quick_fix_attributes', "true");
-				$session->set('attribute_email', $username);
 			}
 
 			$email = $username;
@@ -1314,14 +1231,7 @@ class PlgSystemSamlredirect extends CMSPlugin
 			SAML_Utilities::saveTestConfig('#__miniorange_saml_config', 'sso_status', 0);
 			SAML_Utilities::keepRecords('SSO Status', 'Could not save user due to invalid email address (Attribute Mapping Issue)');
 
-			if ($session->get('quick_fix_attributes') && ($session->get('quick_fix_attributes') == 'true') && $session->get('attribute_email') && (strcmp($session->get('attribute_email'), $user->email == 0)))
-			{
-				self::moUserNotRegisteredNameidIssue($user);
-			}
-			else
-			{
-				self::moUserNotRegisteredIssue($user, $post);
-			}
+			self::moUserNotRegisteredIssue($user, $post);
 		}
 
 		$usrlim = (int) base64_decode($result['userslim']);
@@ -1433,15 +1343,6 @@ class PlgSystemSamlredirect extends CMSPlugin
             <div style="display:inline-block">
                 <a href="index.php" type="button" style="padding: 10px 20px;background: #226a8b;cursor: pointer;font-size:15px;border-radius: 3px;border-color:black;border-width: 1px;border-style: solid;color: #FFF;">' . Text::_("PLG_SYSTEM_SAMLREDIRECT_BACK_BTN") . '</a>
             </div>
-            <div style="display:inline-block">
-                <form  method="post" action="' . Uri::root() . '?morequest=acs" >
-                     <input style="padding: 10px 20px;background: green;cursor: pointer;font-size:15px;border-radius: 3px;border-color:black;border-width: 1px;border-style: solid;color: #FFF;" type="submit" value="' . Text::_("PLG_SYSTEM_SAMLREDIRECT_QUICK_FIX_BTN") . '">
-                     <input type="hidden" name="quick_fix_attributes" value="true" >
-                     <input type="hidden" name="SAMLResponse" value="' . $post["SAMLResponse"] . '">
-                     <input type="hidden" name="RelayState" value="' . $post["RelayState"] . '">
-                 </form>
-             </div>
-          
             <div style="display:inline-block">
                 <a href="https://plugins.miniorange.com/joomla-single-sign-on-sso#pricing" type="button" style="padding: 10px 20px;background: #226a8b;cursor: pointer;font-size:15px;border-radius: 3px;border-color:black;border-width: 1px;border-style: solid;color: #FFF;" target="_blank">' . Text::_("PLG_SYSTEM_SAMLREDIRECT_UPGRADE_BTN") . '</a>
             </div>

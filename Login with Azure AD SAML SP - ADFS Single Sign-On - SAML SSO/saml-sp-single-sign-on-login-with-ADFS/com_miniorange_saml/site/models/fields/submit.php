@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -22,10 +22,25 @@ use Joomla\CMS\Form\FormField;
  */
 class JFormFieldSubmit extends FormField
 {
+	/**
+	 * The form field type.
+	 *
+	 * @var    string
+	 */
 	protected $type = 'submit';
 
+	/**
+	 * Submit button value.
+	 *
+	 * @var    string
+	 */
 	protected $value;
 
+	/**
+	 * Target form identifier.
+	 *
+	 * @var    string
+	 */
 	protected $for;
 
 	/**

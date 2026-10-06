@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -18,7 +18,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
  *
  * @since  1.6
  */
-class Miniorange_samlHelpersMiniorange_saml
+class Miniorange_SamlHelpersMiniorange_Saml
 {
 	/**
 	 * Get an instance of the named model
@@ -35,7 +35,7 @@ class Miniorange_samlHelpersMiniorange_saml
 		if (file_exists(JPATH_SITE . '/components/com_miniorange_saml/models/' . strtolower($name) . '.php'))
 		{
 			require_once JPATH_SITE . '/components/com_miniorange_saml/models/' . strtolower($name) . '.php';
-			$model = BaseDatabaseModel::getInstance($name, 'Miniorange_samlModel');
+			$model = BaseDatabaseModel::getInstance($name, 'Miniorange_SamlModel');
 		}
 
 		return $model;

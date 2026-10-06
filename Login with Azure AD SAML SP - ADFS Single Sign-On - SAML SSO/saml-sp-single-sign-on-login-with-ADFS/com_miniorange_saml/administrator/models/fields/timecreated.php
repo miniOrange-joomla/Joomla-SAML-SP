@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -43,21 +43,21 @@ class JFormFieldTimecreated extends FormField
 		// Initialize variables.
 		$html = array();
 
-		$time_created = $this->value;
+		$timeCreated = $this->value;
 
-		if (!strtotime($time_created))
+		if (!strtotime($timeCreated))
 		{
-			$time_created = Factory::getDate('now', Factory::getConfig()->get('offset'))->toSql(true);
-			$html[]       = '<input type="hidden" name="' . $this->name . '" value="' . $time_created . '" />';
+			$timeCreated = Factory::getDate('now', Factory::getConfig()->get('offset'))->toSql(true);
+			$html[]       = '<input type="hidden" name="' . $this->name . '" value="' . $timeCreated . '" />';
 		}
 
 		$hidden = (boolean) $this->element['hidden'];
 
 		if ($hidden == null || !$hidden)
 		{
-			$jdate       = new Date($time_created);
-			$pretty_date = $jdate->format(Text::_('DATE_FORMAT_LC2'));
-			$html[]      = "<div>" . $pretty_date . "</div>";
+			$jdate       = new Date($timeCreated);
+			$prettyDate = $jdate->format(Text::_('DATE_FORMAT_LC2'));
+			$html[]      = "<div>" . $prettyDate . "</div>";
 		}
 
 		return implode($html);

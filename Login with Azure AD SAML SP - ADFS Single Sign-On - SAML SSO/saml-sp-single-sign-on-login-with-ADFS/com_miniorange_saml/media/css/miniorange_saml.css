@@ -1,22 +1,22 @@
 .loginRadiusProviders input{
-	margin:0
+	margin: 0
 }
 .loginRadiusProviders{
 	width: 325px;
 	float: left;
-	margin-top:6px;
+	margin-top: 6px;
 }
 .socialTitle{
 	width: 225px !important;
 	clear: none !important;
 	margin: 5px !important;
-	display:inline !important;
+	display: inline !important;
 }
 div.current input, div.current textarea, div.current select {
   float: none !important;
 }
 dt.open h3 {
-  background:#ddd !important;
+  background: #ddd !important;
 }
 dd {
   margin-left: 0px !important;
@@ -35,32 +35,32 @@ div.current {
   clear: both;
 }
 .help_ul {
-  margin:0 0 15px 25px;
-  padding:0px;
-  float:left;
-  list-style:circle;
+  margin: 0 0 15px 25px;
+  padding: 0px;
+  float: left;
+  list-style: circle;
 }
 .help_ul li a {
-  font-family:Arial, Helvetica, sans-serif;
-  font-size:12px;
-  color:#000000;
-  line-height:160%;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  color: #000000;
+  line-height: 160%;
 }
 .stay_ul {
-  margin:0 0 15px 10px;
-  padding:0px;
-  float:left;
-  list-style:none;
+  margin: 0 0 15px 10px;
+  padding: 0px;
+  float: left;
+  list-style: none;
 }
 .stay_ul li {
-  line-height:160%;
-  float:left;
-  margin:0 10px 0 0;
+  line-height: 160%;
+  float: left;
+  margin: 0 10px 0 0;
 }
 .saml_table .lrsubhead {
- font-weight: bold ;
- font-size: 13px ;
- font-weight: bold ;
+ font-weight: bold;
+ font-size: 13px;
+ font-weight: bold;
 }
 .saml_form {
   padding: 0;
@@ -91,7 +91,7 @@ div.current {
   font-size: 14px;
   font-weight: bold;
   margin-top: 15px;
-  color:#00ccff;
+  color: #00ccff;
 }
 .saml_form .lrrow_button {
  background-color: #F6F6F6;
@@ -102,7 +102,7 @@ div.current {
 .saml_form .lrrow_description {
  padding: 5px 0 10px 10px;
  font-weight: bold;
- color:#00ccff;
+ color: #00ccff;
 }
 .saml_form_main {
  background-color: #EAF7FF;
@@ -114,12 +114,12 @@ div.current {
  background-color: #EAF7FF;
 }
 .icon-48-configuration {
-    background-image: url("../img/configuration.gif");
+	background-image: url("../img/configuration.gif");
 }
 .saml_table {
- background-color: #efefef ;
- border: 1px solid #ccc ;
- margin-bottom: 10px ;
+ background-color: #efefef;
+ border: 1px solid #ccc;
+ margin-bottom: 10px;
  border-collapse: collapse;
  font-family: sans-serif;
  font-size: 12px;
@@ -128,64 +128,64 @@ div.current {
  width: 100%;
 }
 .saml_table input {
- border-color: #aaa ;
+ border-color: #aaa;
 }
 .saml_table .head {
- font-weight: bold ;
- font-size: 13px ;
- font-weight: bold ;
- background-color: #ddd ;
+ font-weight: bold;
+ font-size: 13px;
+ font-weight: bold;
+ background-color: #ddd;
 }
 .saml_table th, .saml_table label {
-    color: #222222;
-    text-shadow: 0 1px 0 #FFFFFF;
+	color: #222222;
+	text-shadow: 0 1px 0 #FFFFFF;
 }
 .saml_table th {
-    padding: 10px;
-    text-align: left;
-    vertical-align: top;
-    width: 200px;
+	padding: 10px;
+	text-align: left;
+	vertical-align: top;
+	width: 200px;
 }
 .saml_table th, .saml_table label {
-    font-weight: normal;
-    text-shadow: 0 1px 0 #FFFFFF;
+	font-weight: normal;
+	text-shadow: 0 1px 0 #FFFFFF;
 }
 .saml_table td {
-    font-size: 12px;
-    line-height: 20px;
-    margin-bottom: 9px;
-    padding: 8px 10px;
+	font-size: 12px;
+	line-height: 20px;
+	margin-bottom: 9px;
+	padding: 8px 10px;
 }
 .saml_table td, textarea {
-    line-height: inherit;
+	line-height: inherit;
 }
 .saml_table td, textarea, input, select {
-    font-family: inherit;
-    font-size: inherit;
-    font-weight: inherit;
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
 }
 .saml_table tr td.saml_row {
- line-height: 36px ;
+ line-height: 36px;
 }
 .saml_table tr.description td {
- color: #0D5995 ;
+ color: #0D5995;
 }
 .saml_table .lrrow_white {
- background-color: #fff ;
+ background-color: #fff;
 }
 .saml_table th, .saml_table label {
-    color: #222222;
-    text-shadow: 0 1px 0 #FFFFFF;
+	color: #222222;
+	text-shadow: 0 1px 0 #FFFFFF;
 }
 .saml_table th {
-    padding: 10px;
-    text-align: left;
-    vertical-align: top;
-    width: 200px;
+	padding: 10px;
+	text-align: left;
+	vertical-align: top;
+	width: 200px;
 }
 .saml_table th, .saml_table label {
-    font-weight: normal;
-    text-shadow: 0 1px 0 #FFFFFF;
+	font-weight: normal;
+	text-shadow: 0 1px 0 #FFFFFF;
 }
 .lrgreenbutton{
 	background: #5BB75B;
@@ -194,20 +194,20 @@ div.current {
 	margin: 15px;
 	padding: 10px 50px;
 	font-size: 15px;
-	color:#fff;
-	text-decoration:none;
-	font-weight:bold;
+	color: #fff;
+	text-decoration: none;
+	font-weight: bold;
 }
 .lrgreenbutton:hover{
 	background: #51A351;
 }
 
 .other-filters{
-    padding: 0 14px;
+	padding: 0 14px;
 }
 
 .other-filters{
-    padding: 0 14px;
+	padding: 0 14px;
 }
 
 .faqheading {
@@ -221,36 +221,36 @@ div.current {
 }
 .faqcontent.in{
 	margin: 10px;
-    border: 1px solid #ddd;
-    padding: 10px;
+	border: 1px solid #ddd;
+	padding: 10px;
 }
 
-#system-message-container.j-toggle-main{float:none !important;}
+#system-message-container.j-toggle-main{float: none !important;}
 
 /* SAML Test Configuration Styles */
 .saml-test-container {
-    margin-top: 20px;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+	margin-top: 20px;
+	background: #ffffff;
+	border-radius: 8px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+	overflow: hidden;
 }
 
 .saml-test-table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 14px;
-    margin: 0;
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 14px;
+	margin: 0;
 }
 
 .saml-test-table thead tr {
-    background: #F3F7FC;
-    color: black;
+	background: #F3F7FC;
+	color: black;
 }
 
 .saml-test-table th {
-    padding: 16px;
-    font-weight: 600;
-    text-align: left;
-    font-size: 16px;
+	padding: 16px;
+	font-weight: 600;
+	text-align: left;
+	font-size: 16px;
 }

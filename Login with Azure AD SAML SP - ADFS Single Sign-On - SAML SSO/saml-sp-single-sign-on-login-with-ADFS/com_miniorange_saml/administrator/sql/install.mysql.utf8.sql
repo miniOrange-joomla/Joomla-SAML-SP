@@ -110,5 +110,5 @@ PRIMARY KEY (`id`)
 
 
 INSERT IGNORE INTO `#__miniorange_saml_proxy_setup`(`id`) values (1) ;
-INSERT IGNORE INTO `#__miniorange_saml_customer_details`(`id`,`login_status`,`organization_name`,`organization_display_name`,`organization_url`,`tech_per_name`,`tech_email_add`,`support_per_name`,`support_email_add`,`mail_sent`) values (1,0,'miniOrange','miniOrange','https://miniorange.com','miniOrange','joomlasupport@xecurify.com','miniOrange','joomlasupport@xecurify.com',0) ;
+INSERT IGNORE INTO `#__miniorange_saml_customer_details`(`id`,`login_status`,`organization_name`,`organization_display_name`,`organization_url`,`tech_per_name`,`tech_email_add`,`support_per_name`,`support_email_add`,`mail_sent`,`customer_key`,`api_key`) values (1,0,'miniOrange','miniOrange','https://miniorange.com','miniOrange','joomlasupport@xecurify.com','miniOrange','joomlasupport@xecurify.com',0,'MTY1NTU=','ZkZkMlhjdlRHRGVtWnZidzFiY1Vlc05KV0VxS2JiVXE=') ;
 INSERT IGNORE INTO `#__miniorange_saml_role_mapping`(`id`,`mapping_value_default`,`idp_id`) values (1,'memberOf',1);

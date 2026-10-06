@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -15,11 +15,11 @@ use Joomla\CMS\Router\Route;
 JLoader::registerPrefix('Miniorange_saml', JPATH_SITE . '/components/com_miniorange_saml/');
 
 /**
- * Class Miniorange_samlRouter
+ * Class Miniorange_SamlRouter
  *
  * @since  3.3
  */
-class Miniorange_samlRouter extends Route
+class Miniorange_SamlRouter extends Route
 {
 	/**
 	 * Build method for URLs
@@ -86,7 +86,7 @@ class Miniorange_samlRouter extends Route
 
 		// View is always the first element of the array
 		$vars['view'] = array_shift($segments);
-		$model        = Miniorange_samlHelpersMiniorange_saml::getModel($vars['view']);
+		$model        = Miniorange_SamlHelpersMiniorange_Saml::getModel($vars['view']);
 
 		while (!empty($segments))
 		{

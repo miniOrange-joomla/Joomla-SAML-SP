@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -16,12 +16,13 @@ use Joomla\Database\DatabaseInterface;
 
 class MoSamlDbHelper
 {
-    public static function getDb()
-    {
-        if (method_exists(Factory::class, 'getContainer')) {
-            return Factory::getContainer()->get(DatabaseInterface::class);
-        }
+	public static function getDb()
+	{
+		if (method_exists(Factory::class, 'getContainer'))
+		{
+			return Factory::getContainer()->get(DatabaseInterface::class);
+		}
 
-        return Factory::getDbo();
-    }
+		return Factory::getDbo();
+	}
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -9,37 +9,34 @@
  * @contact     info@xecurify.com
  */
 
- defined('_JEXEC') or die;
-
+defined('_JEXEC') or die;
 
 include "BasicEnum.php";
 
-class mo_idp_info extends BasicEnum{
-	
-    const idp_entity_id = "idp_entity_id";
-	const name_id_format="name_id_format";
-	const binding ="binding";
-	const single_signon_service_url = "single_signon_service_url";
-    const certificate = 'certificate';
+class Mo_Idp_Info extends BasicEnum
+{
+	const IDP_ENTITY_ID = "idp_entity_id";
+	const NAME_ID_FORMAT = "name_id_format";
+	const BINDING = "binding";
+	const SINGLE_SIGNON_SERVICE_URL = "single_signon_service_url";
+	const CERTIFICATE = 'certificate';
 }
 
-class mo_attribute_mapping extends BasicEnum{
-	const name = "name";
+class Mo_Attribute_Mapping extends BasicEnum
+{
+	const NAME = "name";
 }
 
-class mo_role_mapping extends BasicEnum{
-	
-	const enable_saml_role_mapping = "enable_saml_role_mapping";
-	const mapping_value_default ="mapping_value_default";
-	
+class Mo_Role_Mapping extends BasicEnum
+{
+	const ENABLE_SAML_ROLE_MAPPING = "enable_saml_role_mapping";
+	const MAPPING_VALUE_DEFAULT = "mapping_value_default";
 }
 
-class mo_proxy extends BasicEnum{
-	
-	const proxy_host_name = "proxy_host_name";
-	const port_number = "port_number";
-	const username ="username";
-	const password = "password";	
-	
+class Mo_Proxy extends BasicEnum
+{
+	const PROXY_HOST_NAME = "proxy_host_name";
+	const PORT_NUMBER = "port_number";
+	const USERNAME = "username";
+	const PASSWORD = "password";
 }
- 

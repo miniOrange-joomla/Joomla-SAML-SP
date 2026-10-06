@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -15,11 +15,11 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
 
 /**
- * Class Miniorange_samlController
+ * Class Miniorange_SamlController
  *
  * @since  1.6
  */
-class Miniorange_samlController extends BaseController
+class Miniorange_SamlController extends BaseController
 {
 	/**
 	 * Method to display a view.
@@ -34,8 +34,8 @@ class Miniorange_samlController extends BaseController
 	public function display($cachable = false, $urlparams = false)
 	{
 		$input = method_exists(Factory::getApplication(), 'getInput')
-    			 ? Factory::getApplication()->getInput()
-    			 : Factory::getApplication()->input;
+				 ? Factory::getApplication()->getInput()
+				 : Factory::getApplication()->input;
 
 		$view = $input->getCmd('view', 'myaccounts');
 		$input->set('view', $view);

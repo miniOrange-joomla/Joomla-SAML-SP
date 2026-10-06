@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -10,7 +10,7 @@
  */
 
 // No direct access
-defined('_JEXEC') or die; 
+defined('_JEXEC') or die;
 
 use Joomla\CMS\MVC\View\HtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
@@ -21,12 +21,27 @@ use Joomla\CMS\Language\Text;
  *
  * @since  1.6
  */
-class Miniorange_samlViewMyaccounts extends HtmlView
+class Miniorange_SamlViewMyaccounts extends HtmlView
 {
+	/**
+	 * List items.
+	 *
+	 * @var    array
+	 */
 	protected $items;
 
+	/**
+	 * Pagination object.
+	 *
+	 * @var    JPagination
+	 */
 	protected $pagination;
 
+	/**
+	 * Model state.
+	 *
+	 * @var    JObject
+	 */
 	protected $state;
 
 	/**
@@ -48,11 +63,11 @@ class Miniorange_samlViewMyaccounts extends HtmlView
 			throw new Exception(implode("\n", $errors));
 		}
 
-		Miniorange_samlHelpersMiniorange_saml::addSubmenu('myaccounts');
+		Miniorange_SamlHelpersMiniorange_Saml::addSubmenu('myaccounts');
 
-        $this->addToolbar();
+		$this->addToolbar();
 
-        parent::display($tpl);
+		parent::display($tpl);
 	}
 
 	/**
@@ -64,26 +79,25 @@ class Miniorange_samlViewMyaccounts extends HtmlView
 	 */
 	protected function addToolbar()
 	{
-	
 
-        if(MoConstants::MO_SAML_SP == "ALL")
-        {
-            ToolBarHelper::title(Text::_('COM_MINIORANGE_SAML_PLUGIN_TITLE'), 'logo mo_saml_sp_logo');
-        }
-		elseif(MoConstants::MO_SAML_SP == "ADFS")
-        {
-            ToolBarHelper::title(Text::_('COM_MINIORANGE_SAML_PLUGIN_TITLE_ADFS'), 'logo mo_saml_sp_logo');
-        }
+		if (MoConstants::MO_SAML_SP == "ALL")
+		{
+			ToolBarHelper::title(Text::_('COM_MINIORANGE_SAML_PLUGIN_TITLE'), 'logo mo_saml_sp_logo');
+		}
+		elseif (MoConstants::MO_SAML_SP == "ADFS")
+		{
+			ToolBarHelper::title(Text::_('COM_MINIORANGE_SAML_PLUGIN_TITLE_ADFS'), 'logo mo_saml_sp_logo');
+		}
 		elseif (MoConstants::MO_SAML_SP == "GOOGLEAPPS")
-        {
-            ToolBarHelper::title(Text::_('COM_MINIORANGE_SAML_PLUGIN_TITLE_GOOGLE'), 'logo mo_saml_sp_logo');
-        }
+		{
+			ToolBarHelper::title(Text::_('COM_MINIORANGE_SAML_PLUGIN_TITLE_GOOGLE'), 'logo mo_saml_sp_logo');
+		}
 	}
 
 	/**
-	 * Method to order fields 
+	 * Method to order fields
 	 *
-	 * @return void 
+	 * @return void
 	 */
 	protected function getSortFields()
 	{

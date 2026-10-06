@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -19,7 +19,7 @@ use Joomla\CMS\Component\ComponentHelper;
  *
  * @since  1.6
  */
-class Miniorange_samlModelMyaccounts extends ListModel
+class Miniorange_SamlModelMyaccounts extends ListModel
 {
 	/**
 	 * Method to auto-populate the model state.

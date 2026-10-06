@@ -718,6 +718,146 @@ class SAML_Utilities
 	}
 
 
+	/**
+	 * Stop SSO when signature or certificate requirements fail (Finding 1).
+	 *
+	 * @param   string  $relayState   Relay state from the ACS request.
+	 * @param   string  $errorKey     Language key for the error summary (test config).
+	 * @param   string  $causeKey     Language key for the possible cause (test config).
+	 * @param   string  $logContext   Short label for keepRecords.
+	 *
+	 * @return  void
+	 */
+	public static function showSamlSecurityError($relayState, $errorKey, $causeKey, $logContext)
+	{
+		self::loadLanguage();
+		ob_end_clean();
+
+		if ($relayState == 'testValidate')
+		{
+			self::saveTestConfig('#__miniorange_saml_config', 'test_configuration', 0);
+			self::keepRecords('Test Configuration', $logContext);
+			echo '<div style="font-family:Calibri;padding:0 3%;">';
+			echo '<div style="color: #a94442;background-color: #f2dede;padding: 15px;margin-bottom: 20px;text-align:center;border:1px solid #E6B3B2;font-size:18pt;"> '
+				. Text::_('LIB_MINIORANGESAMLPLUGIN_ERR_HEADER') . '</div>
+                    <div style="color: #a94442;font-size:14pt; margin-bottom:20px;">
+                    <p><strong>' . Text::_('LIB_MINIORANGESAMLPLUGIN_ERR') . ': </strong>' . Text::_($errorKey) . '</p>
+                    <p><strong>' . Text::_('LIB_MINIORANGESAMLPLUGIN_ERROR_CAUSE') . ': </strong>' . Text::_($causeKey) . '</p>
+                    </div>
+                    <div style="margin:3%;display:block;text-align:center;">
+                    <input style="padding:1%;background: #3d618f!important;cursor: pointer;font-size:15px;border-width: 1px;border-style: solid;border-radius: 3px;white-space: nowrap;box-sizing: border-box;border-color: #3d618f;box-shadow: 0px 1px 0px rgba(120, 200, 230, 0.6) inset;color: #FFF;" type="button" value="'
+				. Text::_('LIB_MINIORANGESAMLPLUGIN_DONE_BTN') . '" onClick="self.close();">
+                    </div></div>';
+			exit;
+		}
+
+		self::saveTestConfig('#__miniorange_saml_config', 'sso_status', 0);
+		self::keepRecords('SSO Status', $logContext);
+		echo ' <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_('LIB_MINIORANGESAMLPLUGIN_ERR') . ': </strong>'
+			. Text::_('LIB_MINIORANGESAMLPLUGIN_SSO_ERR_EIGHT') . '</p></div>
+            <div style="margin:3%;display:block;text-align:center;">
+              <form action="' . Uri::root() . '"><input style="padding:1%;background: #3d618f!important;cursor: pointer;font-size:15px;border-width: 1px;border-style: solid;border-radius: 3px;white-space: nowrap;box-sizing: border-box;border-color: #3d618f;box-shadow: 0px 1px 0px rgba(120, 200, 230, 0.6) inset;color: #FFF;"type="submit" value="'
+			. Text::_('LIB_MINIORANGESAMLPLUGIN_BACK_BTN') . '"></form></div>';
+		exit;
+	}
+
+	/**
+	 * Require a signed Response or Assertion and verify against the configured IdP certificate.
+	 *
+	 * @param   SAML2_Response  $samlResponse     Parsed SAML response.
+	 * @param   string          $acsUrl           ACS URL used for destination checks.
+	 * @param   string          $certFromPlugin   IdP certificate from plugin configuration.
+	 * @param   string          $relayState       Relay state from the ACS request.
+	 * @param   array           $post             POST data.
+	 *
+	 * @return  void
+	 */
+	public static function validateAndVerifySamlSignatures($samlResponse, $acsUrl, $certFromPlugin, $relayState, $post)
+	{
+		self::loadLanguage();
+		$assertions = $samlResponse->getAssertions();
+
+		if (empty($assertions))
+		{
+			self::showSamlSecurityError(
+				$relayState,
+				'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_NO_ASSERTION',
+				'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_NO_ASSERTION_CAUSE',
+				'No SAML assertion in response'
+			);
+		}
+
+		$responseSignatureData = $samlResponse->getSignatureData();
+		$assertionSignatureData = current($assertions)->getSignatureData();
+		$hasResponseSignature = !empty($responseSignatureData);
+		$hasAssertionSignature = !empty($assertionSignatureData);
+
+		if (!$hasResponseSignature && !$hasAssertionSignature)
+		{
+			self::showSamlSecurityError(
+				$relayState,
+				'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_UNSIGNED',
+				'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_UNSIGNED_CAUSE',
+				'Unsigned SAML Response'
+			);
+		}
+
+		if (empty(trim((string) $certFromPlugin)))
+		{
+			self::showSamlSecurityError(
+				$relayState,
+				'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_MISSING_IDP_CERT',
+				'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_MISSING_IDP_CERT_CAUSE',
+				'Missing IdP certificate'
+			);
+		}
+
+		$certFromPlugin = self::sanitizeCertificate($certFromPlugin);
+		$certFingerprint = XMLSecurityKey::getRawThumbprint($certFromPlugin);
+		$certFingerprint = is_string($certFingerprint) ? iconv('UTF-8', 'CP1252//IGNORE', $certFingerprint) : '';
+		$certFingerprint = is_string($certFingerprint) ? preg_replace('/\s+/', '', $certFingerprint) : '';
+
+		if ($certFingerprint === '')
+		{
+			self::showSamlSecurityError(
+				$relayState,
+				'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_MISSING_IDP_CERT',
+				'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_MISSING_IDP_CERT_CAUSE',
+				'Invalid IdP certificate'
+			);
+		}
+
+		if ($hasResponseSignature)
+		{
+			$validSignature = self::processResponse($acsUrl, $certFingerprint, $responseSignatureData, $samlResponse, $certFromPlugin, $relayState, $post);
+
+			if ($validSignature === false)
+			{
+				self::showSamlSecurityError(
+					$relayState,
+					'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_INVALID_SIGN_RESP',
+					'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_SIX',
+					'Invalid SAML Response signature'
+				);
+			}
+		}
+
+		if ($hasAssertionSignature)
+		{
+			$validSignature = self::processResponse($acsUrl, $certFingerprint, $assertionSignatureData, $samlResponse, $certFromPlugin, $relayState, $post);
+
+			if ($validSignature === false)
+			{
+				self::showSamlSecurityError(
+					$relayState,
+					'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_INVALID_SIGN_ASSERTION',
+					'LIB_MINIORANGESAMLPLUGIN_SSO_ERR_SIX',
+					'Invalid SAML Assertion signature'
+				);
+			}
+		}
+	}
+
 	public static function showInvalidIssuerMessage($issuer, $issuerToValidateAgainst,$post,$type,$relayState)
 	{
 		self::loadLanguage();
@@ -753,31 +893,20 @@ class SAML_Utilities
 			if ($type == 'change_sp_id')
 			{
 				echo'
-                        <p><strong>Solution:</strong> You can use any of the following solution.
-                        <ui>
-                            <li style="margin-left:15px;font-size:15px;">You can navigate your Identity Provider (IdP) and manually update the configured Entity ID as provided in the plugin. </li>
-                            <li style="margin-left:15px;font-size:15px;">You can modify the Service Provider (SP) Entity ID specified in the plugin to match the Entity ID configured in your Identity Provider (IdP) by clicking the "Fix Issue" button. </li>
-                        </ui>';
+                        <p><strong>' . Text::_('LIB_MINIORANGESAMLPLUGIN_SOLUTION_LABEL') . '</strong></p>
+                        <ul>
+                            <li style="margin-left:15px;font-size:15px;">' . Text::_('LIB_MINIORANGESAMLPLUGIN_SSO_ERR_SOLUTION_SP_ONE') . '</li>
+                            <li style="margin-left:15px;font-size:15px;">' . Text::_('LIB_MINIORANGESAMLPLUGIN_SSO_ERR_SOLUTION_SP_TWO') . '</li>
+                        </ul>';
 			}
 			else
 			{
 				echo'
-                        <p><strong>Solution:</strong> You can modify the Identity Provider (IDP) Entity ID configured in the plugin to match the Entity ID provided by your Identity Provider (IdP) by clicking the "Fix Issue" button. </p>';
+                        <p><strong>' . Text::_('LIB_MINIORANGESAMLPLUGIN_SOLUTION_LABEL') . '</strong> ' . Text::_('LIB_MINIORANGESAMLPLUGIN_SSO_ERR_SOLUTION_IDP') . '</p>';
 			}
 
 					echo'
                     </p>
-                    </div>
-                    
-                    <div style="margin:3%;display:block;text-align:center;">
-                        <form  method="post" action="' . Uri::root() . '?morequest=acs" >
-                            <input style="padding:1%;background: #3d618f!important;cursor: pointer;font-size:15px;border-width: 1px;border-style: solid;border-radius: 3px;white-space: nowrap;box-sizing: border-box;border-color: #3d618f;box-shadow: 0px 1px 0px rgba(120, 200, 230, 0.6) inset;color: #FFF;" type="submit" value="' . Text::_("LIB_MINIORANGESAMLPLUGIN_FIX_ISSUE_BTN") . '" >
-                            <input type="hidden" name="fix_issuer_issue" value="true" >
-                            <input type="hidden" name="SAMLResponse" value="' . $post["SAMLResponse"] . '">
-                            <input type="hidden" name="RelayState" value="' . $post["RelayState"] . '">
-                            <input type="hidden" name="issuer" value="' . $issuer . '">
-                            <input type="hidden" name="type" value="' . $type . '">
-                        </form>
                     </div>
                     <hr><br>
                     <div style="font-size:14pt;">' . Text::_("LIB_MINIORANGESAMLPLUGIN_EXPORT_CONFIG") . '</div>
@@ -874,7 +1003,8 @@ class SAML_Utilities
 			echo '<div style="color: #a94442;background-color: #f2dede;padding: 15px;margin-bottom: 20px;text-align:center;border:1px solid #E6B3B2;font-size:18pt;"> ' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERR_HEADER") . '</div>
             <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERR") . ': </strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_SSO_ERR_SEVEN") . '</p>
             <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERROR_CAUSE") . ': </strong>' . $cause . '</p>
-			<p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_EXPECTED_VAL") . ':</strong>' . $expectedCert . '</p>';
+			<p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_EXPECTED_VAL") . ':</strong>' . $expectedCert . '</p>
+			<p><strong>' . Text::_('LIB_MINIORANGESAMLPLUGIN_SOLUTION_LABEL') . '</strong> ' . Text::_('LIB_MINIORANGESAMLPLUGIN_SSO_ERR_SOLUTION_CERT') . '</p>';
 			echo str_repeat('&nbsp;', 15);
 			echo '</div>
 
@@ -882,22 +1012,13 @@ class SAML_Utilities
 
 			$btnBase = 'display:inline-block;vertical-align:middle;margin:6px;padding:10px 24px;min-width:120px;font-size:15px;line-height:1.4;text-align:center;cursor:pointer;border-width:1px;border-style:solid;border-radius:4px;box-sizing:border-box;white-space:nowrap;color:#FFF;text-decoration:none;';
 			$btnBlue = $btnBase . 'background:#3d618f;border-color:#3d618f;box-shadow:0px 1px 0px rgba(120, 200, 230, 0.6) inset;';
-			$btnGreen = $btnBase . 'background:#2e7d32;border-color:#1b5e20;box-shadow:0px 1px 0px rgba(160, 220, 160, 0.5) inset;';
 
 			if ($isAzureAd == 1)
 			{
-				echo '<a href="' . $redirect . '" style="' . $btnBlue . '" type="button">' . Text::_("LIB_MINIORANGESAMLPLUGIN_UPGRADE_BTN") . '</a>';
+				echo '<a href="' . $redirect . '" style="' . $btnBlue . '" type="button">' . Text::_("LIB_MINIORANGESAMLPLUGIN_UPGRADE_BTN") . '</a> ';
 			}
 
-				echo'
-                <form style="display:inline-block;vertical-align:middle;margin:0;" method="post" action="' . Uri::root() . '?morequest=acs" >
-                    <input style="' . $btnGreen . '" type="submit" value="' . Text::_("LIB_MINIORANGESAMLPLUGIN_QUICK_FIX_BTN") . '" >
-                    <input type="hidden" name="quick_fix_cert" value="true" >
-                    <input type="hidden" name="expected_cert" value="' . $expectedCert . '">
-                    <input type="hidden" name="SAMLResponse" value="' . $post["SAMLResponse"] . '">
-                    <input type="hidden" name="RelayState" value="' . $post["RelayState"] . '">   
-                </form>
-                <input style="' . $btnBlue . '" type="button" value="' . Text::_("LIB_MINIORANGESAMLPLUGIN_DONE_BTN") . '" onClick="self.close();">
+			echo '<input style="' . $btnBlue . '" type="button" value="' . Text::_("LIB_MINIORANGESAMLPLUGIN_DONE_BTN") . '" onClick="self.close();">
                 </div></div>';
 			exit;
 		}
@@ -1323,17 +1444,6 @@ class SAML_Utilities
 
 	public static function keepRecords($status,$cause)
 	{
-		$result = new Mo_Saml_Local_Util;
-		$details       = $result->loadDbValues('#__miniorange_saml_customer_details');
-		$dVar = new JConfig;
-		$checkEmail = $dVar->mailfrom;
-		$adminEmail = !empty($details ['admin_email']) ? $details ['admin_email'] : $checkEmail;
-		$adminEmail = !empty($adminEmail) ? $adminEmail : self::getSuperUser();
-		$adminPhone  = isset($details ['admin_phone']) ? $details ['admin_phone'] : '';
-		self::saveTestConfig('#__miniorange_saml_customer_details', 'admin_email', $adminEmail);
-		$contactUs = new Mo_Saml_Local_Customer;
-		$feedbackResponse = $contactUs->submitFeedbackForm($adminEmail, $adminPhone, $status, $cause);
-		json_decode(is_string($feedbackResponse) ? $feedbackResponse : '', true);
 	}
 
 	/**

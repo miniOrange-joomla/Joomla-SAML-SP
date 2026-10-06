@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Component	
+ * @package     Joomla.Component
  * @subpackage  com_miniorange_saml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -43,25 +43,25 @@ class JFormFieldTimeupdated extends FormField
 		// Initialize variables.
 		$html = array();
 
-		$old_time_updated = $this->value;
+		$oldTimeUpdated = $this->value;
 		$hidden           = (boolean) $this->element['hidden'];
 
 		if ($hidden == null || !$hidden)
 		{
-			if (!strtotime($old_time_updated))
+			if (!strtotime($oldTimeUpdated))
 			{
 				$html[] = '-';
 			}
 			else
 			{
-				$jdate       = new Date($old_time_updated);
-				$pretty_date = $jdate->format(Text::_('DATE_FORMAT_LC2'));
-				$html[]      = "<div>" . $pretty_date . "</div>";
+				$jdate       = new Date($oldTimeUpdated);
+				$prettyDate = $jdate->format(Text::_('DATE_FORMAT_LC2'));
+				$html[]      = "<div>" . $prettyDate . "</div>";
 			}
 		}
 
-		$time_updated = Factory::getDate('now', Factory::getConfig()->get('offset'))->toSql(true);
-		$html[]       = '<input type="hidden" name="' . $this->name . '" value="' . $time_updated . '" />';
+		$timeUpdated = Factory::getDate('now', Factory::getConfig()->get('offset'))->toSql(true);
+		$html[]       = '<input type="hidden" name="' . $this->name . '" value="' . $timeUpdated . '" />';
 
 		return implode($html);
 	}

@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Plugin	
+ * @package     Joomla.Plugin
  * @subpackage  plg_authentication_miniorangesaml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -13,37 +13,39 @@ defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\Factory;
 use Joomla\Database\DatabaseInterface;
 
-class plgAuthenticationMiniorangesamlInstallerScript
+class PlgAuthenticationMiniorangesamlInstallerScript
 {
-    /**
-     * This method is called after a component is installed.
-     *
-     * @param  \stdClass $parent - Parent object calling this method.
-     *
-     * @return void
-     */
-    public function install($parent)
-    {
-        $db = $this->getDb();
-        $query = $db->getQuery(true);
-        $query->update('#__extensions');
-        $query->set($db->quoteName('enabled') . ' = 1');
-        $query->where($db->quoteName('element') . ' = ' . $db->quote('miniorangesaml'));
-        $query->where($db->quoteName('type') . ' = ' . $db->quote('plugin'));
-        $db->setQuery($query);
-        $db->execute();
-    }
+	/**
+	 * This method is called after a component is installed.
+	 *
+	 * @param   \stdClass $parent - Parent object calling this method.
+	 *
+	 * @return void
+	 */
+	public function install($parent)
+	{
+		$db = $this->getDb();
+		$query = $db->getQuery(true);
+		$query->update('#__extensions');
+		$query->set($db->quoteName('enabled') . ' = 1');
+		$query->where($db->quoteName('element') . ' = ' . $db->quote('miniorangesaml'));
+		$query->where($db->quoteName('type') . ' = ' . $db->quote('plugin'));
+		$db->setQuery($query);
+		$db->execute();
+	}
 
-    /**
-     * Get database instance (avoids depending on component DbHelper during install).
-     *
-     * @return \Joomla\Database\DatabaseInterface
-     */
-    private function getDb()
-    {
-        if (method_exists(Factory::class, 'getContainer')) {
-            return Factory::getContainer()->get(DatabaseInterface::class);
-        }
-        return Factory::getDbo();
-    }
+	/**
+	 * Get database instance (avoids depending on component DbHelper during install).
+	 *
+	 * @return \Joomla\Database\DatabaseInterface
+	 */
+	private function getDb()
+	{
+		if (method_exists(Factory::class, 'getContainer'))
+		{
+			return Factory::getContainer()->get(DatabaseInterface::class);
+		}
+
+		return Factory::getDbo();
+	}
 }

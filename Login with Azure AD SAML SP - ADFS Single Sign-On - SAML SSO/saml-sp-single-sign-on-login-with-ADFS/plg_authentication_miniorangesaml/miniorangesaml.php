@@ -1,6 +1,6 @@
 <?php
 /**
- * @package     Joomla.Plugin	
+ * @package     Joomla.Plugin
  * @subpackage  plg_authentication_miniorangesaml
  *
  * @author      miniOrange Security Software Pvt. Ltd.
@@ -9,45 +9,49 @@
  * @contact     info@xecurify.com
  */
 
-defined('_JEXEC') or die; 
+defined('_JEXEC') or die;
 
- use Joomla\CMS\Plugin\CMSPlugin; 
+ use Joomla\CMS\Plugin\CMSPlugin;
  use Joomla\CMS\Factory;
  include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
 
- if (defined('_JEXEC')) {
-
+if (defined('_JEXEC'))
+{
 	/**
 	 * This block of code is not used.
 	 */
-	class plgauthenticationminiorangesaml extends CMSPlugin 
+	class PlgAuthenticationMiniorangesaml extends CMSPlugin
 	{
 		/**
 		 * This method should handle any authentication and report back to the subject
-		 * 
 		 *
-		 * @access    public
-		 * @param     array     $credentials    Array holding the user credentials ('username' and 'password')
-		 * @param     array     $options        Array of extra options
-		 * @param     object    $response       Authentication response object
-		 * @return    boolean
+		 * @param   array   $credentials  Array holding the user credentials
+		 * @param   array   $options      Array of extra options
+		 * @param   object  $response     Authentication response object
+		 *
+		 * @return  boolean
 		 */
-		function onUserAuthenticate( $credentials, $options, &$response )
+		public function onUserAuthenticate($credentials, $options, &$response)
 		{
-			if (method_exists(Factory::getApplication(), 'getInput')) {
-    			$cookie = Factory::getApplication()->getInput()->cookie->get('mosamlauthadmin');
-			} else {
-    			$cookie = Factory::getApplication()->input->cookie->get('mosamlauthadmin');
+			if (method_exists(Factory::getApplication(), 'getInput'))
+			{
+				$cookie = Factory::getApplication()->getInput()->cookie->get('mosamlauthadmin');
 			}
-			if (isset($cookie['mosamlauthadmin']) && $cookie['mosamlauthadmin'] != '-1'){
+			else
+			{
+				$cookie = Factory::getApplication()->input->cookie->get('mosamlauthadmin');
+			}
+
+			if (isset($cookie['mosamlauthadmin']) && $cookie['mosamlauthadmin'] != '-1')
+			{
 				$db = MoSamlDbHelper::getDb();
 				$query = $db->getQuery(true);
 				$query->select(array('api_key','customer_token'));
 				$query->from($db->quoteName('#__miniorange_saml_customer_details'));
-				$query->where($db->quoteName('id')." = 1");
+				$query->where($db->quoteName('id') . " = 1");
 				$db->setQuery($query);
 				$customerResult = $db->loadAssoc();
 			}
 		}
 	}
- }
+}

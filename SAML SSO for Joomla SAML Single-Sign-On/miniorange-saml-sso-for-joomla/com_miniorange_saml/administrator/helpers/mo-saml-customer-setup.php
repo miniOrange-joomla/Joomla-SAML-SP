@@ -115,7 +115,6 @@ class Mo_Saml_Local_Customer
 		$url = 'https://login.xecurify.com/moas/api/notify/send';
 
 		$customerKey = MoConstants::getDefaultCustomerKey();
-		$fromEmail = $email;
 		$phpVersion = phpversion();
 		$jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
 		$moPluginVersion = SAML_Utilities::getPluginVersion();
@@ -123,65 +122,14 @@ class Mo_Saml_Local_Customer
 		$serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
 		$webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
 		$pluginName    = (new Mo_Saml_Local_Customer)->pluginName($moPluginVersion);
-		$result        = (new Mo_Saml_Local_Util)->loadDbValues('#__miniorange_saml_config');
-		$details       = (new Mo_Saml_Local_Util)->loadDbValues('#__miniorange_saml_customer_details');
-		$adEmail       = isset($details ['email']) ? $details ['email'] : '';
-		$nousercreated = base64_decode($result['userslim']);
-		$noauthentication = base64_decode($result['sso_test']);
-		$ssoUrl = $result['single_signon_service_url'];
-
-		if ($result['test_configuration'] == true)
-		{
-			$testConfiguration = 'Successful';
-		}
-		elseif ($noauthentication == 0)
-		{
-			$testConfiguration = 'Not tested';
-		}
-		else
-		{
-			$testConfiguration = 'Unsuccessful';
-		}
-
-		$ssoStatus = ($result['sso_status'] == true) ? 'Successful' : 'Unsuccessful';
 		$query1 = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' | PHP ' . $phpVersion . ' | OS ' . $osVersion . ' | Web Server: ' . $webServer . '] ';
 
-		if ($query == 'Test Configuration')
-		{
-			$ccEmail = 'nutan.barad@xecurify.com';
-			$bccEmail = 'mandar.maske@xecurify.com';
-			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $adEmail . '" target="_blank">' . $adEmail . '</a></strong><br><br><strong>SSO URL: </strong>' . $ssoUrl . ' <br><br><strong>Auto created Users:</strong>' . $nousercreated . ' <br><br> <strong> No. of Authentication:</strong>' . $noauthentication . ' <br><br>  <strong>Test Configuration:</strong> ' . $testConfiguration . '<br><br><strong>Possible Cause:</strong> ' . $cause . '<br><br><strong> System Information: </strong>' . $query1 . '</div>';
-			$subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
-		}
-		elseif ($query == 'SSO Status')
-		{
-			$ccEmail = 'nutan.barad@xecurify.com';
-			$bccEmail = 'mandar.maske@xecurify.com';
-			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :</strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $adEmail . '" target="_blank">' . $adEmail . '</a></strong><br><br><strong>SSO URL: </strong>' . $ssoUrl . ' <br><br><strong>Auto created Users:</strong>' . $nousercreated . ' <br><br> <strong> No. of Authentication:</strong>' . $noauthentication . ' <br><br> <strong>SSO Status:</strong> ' . $ssoStatus . '<br><br><strong>Possible Cause:</strong> ' . $cause . '<br><br><strong> System Information:</strong> ' . $query1 . '</div>';
-			$subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
-		}
-		elseif ($query == 'Metadata Fetched')
-		{
-			$ccEmail = 'nutan.barad@xecurify.com';
-			$bccEmail = 'mandar.maske@xecurify.com';
-			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $adEmail . '" target="_blank">' . $adEmail . '</a></strong><br><br><strong>SSO URL: </strong>' . $ssoUrl . ' <br><br><strong>Auto created Users:</strong>' . $nousercreated . ' <br><br> <strong> No. of Authentication:</strong>' . $noauthentication . ' <br><br>  <strong>Test Configuration:</strong> ' . $testConfiguration . '<br><br><strong>Metadata Fetched/Uploaded:</strong> ' . $cause . '<br><br><strong> System Information: </strong>' . $query1 . '</div>';
-			$subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
-		}
-		elseif ($query == 'Manual IDP Configuration')
-		{
-			$ccEmail = 'nutan.barad@xecurify.com';
-			$bccEmail = 'mandar.maske@xecurify.com';
-			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :<strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong>Email :<a href="mailto:' . $adEmail . '" target="_blank">' . $adEmail . '</a></strong><br><br><strong>SSO URL: </strong>' . $ssoUrl . ' <br><br><strong>Auto created Users:</strong>' . $nousercreated . ' <br><br> <strong> No. of Authentication:</strong>' . $noauthentication . ' <br><br>  <strong>Test Configuration:</strong> ' . $testConfiguration . '<br><br><strong>Manual IDP Configuration Saved:</strong> ' . $cause . '<br><br><strong> System Information: </strong>' . $query1 . '</div>';
-			$subject = "MiniOrange Joomla SAML SP [Free] for Efficiency";
-		}
-		else
-		{
-			$ccEmail = 'joomlasupport@xecurify.com';
-			$bccEmail = 'joomlasupport@xecurify.com';
-			$resolvedFeedbackEmail = !empty($feedbackEmail) ? $feedbackEmail : $fromEmail;
-			$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Phone Number :</strong>' . $phone . '<br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank"></strong>' . $fromEmail . '</a><br><br><strong>Email :<a href="mailto:' . $resolvedFeedbackEmail . '" target="_blank">' . $resolvedFeedbackEmail . '</a></strong><br><br><strong>Plugin Deactivated: </strong>' . $query1 . '<br><br><strong>Reason: </strong>' . $query . '</div>';
-			$subject = "miniOrange Joomla SAML SP Free Feedback - " . $resolvedFeedbackEmail;
-		}
+		$ccEmail = 'joomlasupport@xecurify.com';
+		$bccEmail = 'joomlasupport@xecurify.com';
+		$resolvedFeedbackEmail = !empty($feedbackEmail) ? $feedbackEmail : $email;
+		$fromEmail = $resolvedFeedbackEmail;
+		$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Email :<a href="mailto:' . $resolvedFeedbackEmail . '" target="_blank">' . $resolvedFeedbackEmail . '</a></strong><br><br><strong>Plugin Deactivated: </strong>' . $query1 . '<br><br><strong>Reason: </strong>' . $query . '</div>';
+		$subject = "miniOrange Joomla SAML SP Free Feedback - " . $resolvedFeedbackEmail;
 
 		$fields = array(
 			'customerKey' => $customerKey,
@@ -196,44 +144,6 @@ class Mo_Saml_Local_Customer
 				'subject' 		=> $subject,
 				'content' 		=> $content
 			),
-		);
-		$fieldString = json_encode($fields);
-
-		return self::curlCall($url, $fieldString, 0);
-
-	}
-
-	public static function installMailSent($email, $baseUrl)
-	{
-
-		$url = 'https://login.xecurify.com/moas/api/notify/send';
-		$customerKey = MoConstants::getDefaultCustomerKey();
-		$fromEmail = $email;
-		$phpVersion = phpversion();
-		$jCmsVersion = SAML_Utilities::getJoomlaCmsVersion();
-		$moPluginVersion = SAML_Utilities::getPluginVersion();
-		$osVersion    = SAML_Utilities::getOsInfo();
-		$serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown';
-		$webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
-		$pluginName    = (new Mo_Saml_Local_Customer)->pluginName($moPluginVersion);
-		$query1 = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' | PHP ' . $phpVersion . ' | OS ' . $osVersion . ' | Web Server: ' . $webServer . '] ';
-		$ccEmail = 'nutan.barad@xecurify.com';
-		$bccEmail = 'mandar.maske@xecurify.com';
-		$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Admin Email :<a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a></strong><br><br><strong> System Information: </strong>' . $query1 . '</div>';
-		$subject = "Installation of Joomla SAML SP [Free]";
-		$fields = array(
-		'customerKey' => $customerKey,
-		'sendEmail' => true,
-		'email' => array(
-			'customerKey' 	=> $customerKey,
-			'fromEmail' 	=> $fromEmail,
-			'bccEmail' 		=> $bccEmail,
-			'fromName' 		=> 'miniOrange',
-			'toEmail' 		=> $ccEmail,
-			'toName' 		=> $bccEmail,
-			'subject' 		=> $subject,
-			'content' 		=> $content
-		),
 		);
 		$fieldString = json_encode($fields);
 
