@@ -48,6 +48,13 @@ class SAML2_Response
 	private $signatureData;
 
 	/**
+	 * The Response ID attribute.
+	 *
+	 * @var    string|null
+	 */
+	private $id;
+
+	/**
 	 * Constructor for SAML 2 response messages.
 	 *
 	 * @param   DOMElement|NULL $xml The input message.
@@ -63,6 +70,11 @@ class SAML2_Response
 		if ($xml === null)
 		{
 			return;
+		}
+
+		if ($xml->hasAttribute('ID'))
+		{
+			$this->id = $xml->getAttribute('ID');
 		}
 
 		$sig = SAML_Utilities::validateElement($xml);
@@ -132,6 +144,16 @@ class SAML2_Response
 	public function getSignatureData()
 	{
 		return $this->signatureData;
+	}
+
+	/**
+	 * Retrieve the Response ID.
+	 *
+	 * @return  string|null
+	 */
+	public function getId()
+	{
+		return $this->id;
 	}
 
 }

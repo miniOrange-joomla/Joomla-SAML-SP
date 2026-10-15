@@ -2250,8 +2250,12 @@ return $importEnc;
 				switch ($this->type)
 				{
 					case (self::ELEMENT):
-						$newdoc = new DOMDocument;
-						$newdoc->loadXML($decrypted);
+						$newdoc = SAML_Utilities::loadUntrustedXml($decrypted);
+
+						if ($newdoc === false)
+						{
+							throw new Exception('Failed to parse decrypted XML.');
+						}
 
 						if ($this->rawNode->nodeType == XML_DOCUMENT_NODE)
 						{
@@ -2264,6 +2268,11 @@ return $importEnc;
 return $importEnc;
 						break;
 					case (self::CONTENT):
+						if (!is_string($decrypted) || stripos($decrypted, '<!DOCTYPE') !== false)
+						{
+							throw new Exception('Failed to parse decrypted XML.');
+						}
+
 						if ($this->rawNode->nodeType == XML_DOCUMENT_NODE)
 						{
 							$doc = $this->rawNode;
@@ -2273,8 +2282,17 @@ return $importEnc;
 							$doc = $this->rawNode->ownerDocument;
 						}
 
+						$previousLoader = libxml_set_external_entity_loader(function () {
+							return null;
+						});
 						$newFrag = $doc->createDocumentFragment();
-						$newFrag->appendXML($decrypted);
+						$appended = $newFrag->appendXML($decrypted);
+						libxml_set_external_entity_loader($previousLoader);
+
+						if ($appended === false)
+						{
+							throw new Exception('Failed to parse decrypted XML.');
+						}
 						$parent = $this->rawNode->parentNode;
 						$parent->replaceChild($newFrag, $this->rawNode);
 

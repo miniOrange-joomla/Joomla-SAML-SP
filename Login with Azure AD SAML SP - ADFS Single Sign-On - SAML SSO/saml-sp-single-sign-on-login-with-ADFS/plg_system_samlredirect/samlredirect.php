@@ -71,6 +71,7 @@ class PlgSystemSamlredirect extends CMSPlugin
 			$linkChecked = isset($linkCheck['login_link_check']) && $linkCheck['login_link_check'] == 1;
 			$isEntityID = isset($linkCheck['idp_entity_id']) && !empty($linkCheck['idp_entity_id']);
 			$dynamicLink = empty($linkCheck['dynamic_link']) || !isset($linkCheck['dynamic_link']) ? "Login with IDP" : $linkCheck['dynamic_link'];
+			$dynamicLink = SAML_Utilities::escapeHtml($dynamicLink);
 
 			if ($linkChecked == 1 && $isEntityID && $app->isClient('site'))
 			{
@@ -460,10 +461,16 @@ class PlgSystemSamlredirect extends CMSPlugin
 	public function moSamlShowSamlLog($samlRequestResponceXML, $type)
 	{
 		header("Content-Type: text/html");
-		$doc = new DOMDocument;
+		$doc = SAML_Utilities::loadUntrustedXml($samlRequestResponceXML);
+
+		if ($doc === false)
+		{
+			echo 'Invalid XML';
+			exit;
+		}
+
 		$doc->preserveWhiteSpace = false;
 		$doc->formatOutput = true;
-		$doc->loadXML($samlRequestResponceXML);
 
 		if ($type == 'displaySAMLRequest')
 		{
@@ -761,8 +768,12 @@ class PlgSystemSamlredirect extends CMSPlugin
 
 		$samlResponse = base64_decode($samlResponse);
 
-		$document = new DOMDocument;
-		$document->loadXML($samlResponse);
+		$document = SAML_Utilities::loadUntrustedXml($samlResponse);
+
+		if ($document === false)
+		{
+			$this->showExpiryError('Invalid SAML Response.', 'The login response could not be read.');
+		}
 		$samlResponseXml = $document->firstChild;
 		$doc = $document->documentElement;
 
@@ -837,6 +848,16 @@ class PlgSystemSamlredirect extends CMSPlugin
 			$issuer = $appdata['idp_entity_id'];
 
 			SAML_Utilities::validateIssuerAndAudience($samlResponse, $spEntityId, $issuer, $relayState, $post);
+
+			$assertion = current($samlResponse->getAssertions());
+
+			if (SAML_Utilities::isReplayedSamlMessage($samlResponse->getId(), $assertion->getId(), $notOnOrAfter))
+			{
+				$this->showExpiryError(
+					'SAML Response has already been used.',
+					'This login response was already accepted and cannot be reused.'
+				);
+			}
 
 			$username = current(current($samlResponse->getAssertions())->getNameId());
 			$attrs = current($samlResponse->getAssertions())->getAttributes();
@@ -939,8 +960,8 @@ class PlgSystemSamlredirect extends CMSPlugin
 		 <div style="font-family:Calibri;padding:0 3%;">
 			<div style="color: #a94442;background-color: #f2dede;padding: 15px;margin-bottom: 20px;text-align:center;border:1px solid #E6B3B2;font-size:18pt;"> ERROR</div>
 			<div style="color: #a94442;font-size:14pt; margin-bottom:20px;">
-				<p><strong>Error: </strong><?php echo  $message; ?></p>
-				<p><strong>Possible Cause: </strong><?php echo  $cause; ?></p>
+				<p><strong>Error: </strong><?php echo SAML_Utilities::escapeHtml($message); ?></p>
+				<p><strong>Possible Cause: </strong><?php echo SAML_Utilities::escapeHtml($cause); ?></p>
 			</div>
 			<form action="<?php echo Uri::root();?>">
 				<div style="margin:3%;display:block;text-align:center;">
@@ -1059,7 +1080,7 @@ class PlgSystemSamlredirect extends CMSPlugin
 			echo '<div style="font-family:Calibri;padding:0 3%;">';
 			echo '<div style="color: #a94442;background-color: #f2dede;padding: 15px;margin-bottom: 20px;text-align:center;border:1px solid #E6B3B2;font-size:18pt;">' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_HEADER") . ' </div>
             <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR") . ': </strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_ONE") . '</p>
-            <p><strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_CAUSE") . '</strong>:' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_CASUSE_1") . ' ' . $statusCode . ' ' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_CASUSE_2") . ' . </p>
+            <p><strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_CAUSE") . '</strong>:' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_CASUSE_1") . ' ' . SAML_Utilities::escapeHtml($statusCode) . ' ' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_CASUSE_2") . ' . </p>
                             <p><strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_REASON") . '</strong>: ' . $this->getStatusMessage($statusCode) . '</p><br>
             </div>
 
@@ -1307,7 +1328,7 @@ class PlgSystemSamlredirect extends CMSPlugin
 		echo '<div style="font-family:Calibri;padding:0 3%;">';
 		echo '<div style="color: #a94442;background-color: #f2dede;padding: 15px;margin-bottom: 20px;text-align:center;border:1px solid #E6B3B2;font-size:18pt;">
         <img style="width:15px;"src="' . $siteUrl . 'images/wrong.png">' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_HEADER") . ' </div>
-        <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR") . ' : </strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_USER_SAVE_ERR") . ' ' . $user->getError() . '</p>
+        <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR") . ' : </strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_USER_SAVE_ERR") . ' ' . SAML_Utilities::escapeHtml($user->getError()) . '</p>
         <p>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ATTR_ERR_MSG") . ' </p>
        </div>
             
@@ -1331,8 +1352,8 @@ class PlgSystemSamlredirect extends CMSPlugin
 		echo '<div style="font-family:Calibri;padding:0 3%;">';
 		echo '<div style="color: #a94442;background-color: #f2dede;padding: 15px;margin-bottom: 20px;text-align:center;border:1px solid #E6B3B2;font-size:18pt;">
         <img style="width:15px;"src="' . $siteUrl . 'images/wrong.png"> ' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR_HEADER") . ' </div>
-        <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR") . ' : </strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_USER_SAVE_ERR") . ' ' . $user->getError() . '</p>
-        <p>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_USER_SAVE_ERR_1") . ' <strong>' . $user->email . '</strong> ' . Text::_("PLG_SYSTEM_SAMLREDIRECT_USER_SAVE_ERR_2") . '</p>
+        <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_ERR") . ' : </strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_USER_SAVE_ERR") . ' ' . SAML_Utilities::escapeHtml($user->getError()) . '</p>
+        <p>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_USER_SAVE_ERR_1") . ' <strong>' . SAML_Utilities::escapeHtml($user->email) . '</strong> ' . Text::_("PLG_SYSTEM_SAMLREDIRECT_USER_SAVE_ERR_2") . '</p>
         <p>
             <strong>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_SOLUTION") . ':</strong>
             <ul>' . Text::_("PLG_SYSTEM_SAMLREDIRECT_OPTIONS") . '</ul>

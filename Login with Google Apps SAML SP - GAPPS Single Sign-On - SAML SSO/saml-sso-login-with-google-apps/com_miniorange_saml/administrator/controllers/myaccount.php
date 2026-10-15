@@ -17,6 +17,7 @@ use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 jimport('joomla.filesystem.file');
 include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components'
@@ -42,6 +43,31 @@ class Miniorange_SamlControllerMyaccount extends FormController
 	{
 		$config['view_list'] = 'myaccounts';
 		parent::__construct($config);
+	}
+
+	/**
+	 * Require a valid admin session token before any state-changing task.
+	 *
+	 * @param   string  $task  The task to perform.
+	 *
+	 * @return  mixed
+	 *
+	 * @since   1.6
+	 */
+	public function execute($task)
+	{
+		if (!Session::checkToken('post'))
+		{
+			$this->setRedirect(
+				'index.php?option=com_miniorange_saml',
+				Text::_('JINVALID_TOKEN'),
+				'error'
+			);
+
+			return false;
+		}
+
+		return parent::execute($task);
 	}
 
 	/**
@@ -413,8 +439,16 @@ class Miniorange_SamlControllerMyaccount extends FormController
 			return;
 		}
 
-		$document = new DOMDocument;
-		$document->loadXML($file);
+		$document = SAML_Utilities::loadUntrustedXml($file);
+
+		if ($document === false)
+		{
+			$cause = Text::_('COM_MINIORANGE_SAML_MSG_INVALID_METADATA');
+			SAML_Utilities::keepRecords('Metadata Fetched', $cause);
+			$this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $cause, 'error');
+
+			return;
+		}
 		restore_error_handler();
 		$firstChild = $document->firstChild;
 
@@ -435,6 +469,16 @@ class Miniorange_SamlControllerMyaccount extends FormController
 			foreach ($identityProviders as $key => $idp)
 			{
 				$samlLoginUrl = $idp->getLoginURL('HTTP-Redirect');
+
+				if (!empty($samlLoginUrl) && !$this->loginUrlIsAllowed($samlLoginUrl))
+				{
+					$cause = Text::_('COM_MINIORANGE_SAML_MSG_K');
+					SAML_Utilities::keepRecords('Metadata Fetched', $cause);
+					$this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $cause, 'error');
+
+					return;
+				}
+
 				$samlIssuer = $idp->getEntityID();
 				$samlX509Certificate = $idp->getSigningCertificate();
 				$databaseName = '#__miniorange_saml_config';
@@ -1254,7 +1298,10 @@ class Miniorange_SamlControllerMyaccount extends FormController
 	}
 
 	/**
-	 * Fetch SAML metadata from an HTTP(S) URL only (blocks file:// and other schemes).
+	 * Fetch SAML metadata from an HTTP(S) URL on a public host.
+	 *
+	 * Blocks file:// and other schemes, and blocks hosts that are or resolve to
+	 * a private, reserved, or loopback address.
 	 *
 	 * @param   string  $metadataUrl  Metadata URL from request input.
 	 *
@@ -1264,7 +1311,7 @@ class Miniorange_SamlControllerMyaccount extends FormController
 	 */
 	private function fetchMetadataFromUrl($metadataUrl)
 	{
-		$url = filter_var(trim($metadataUrl), FILTER_VALIDATE_URL);
+		$url = filter_var(trim((string) $metadataUrl), FILTER_VALIDATE_URL);
 
 		if ($url === false)
 		{
@@ -1273,8 +1320,10 @@ class Miniorange_SamlControllerMyaccount extends FormController
 
 		$parsedUrl = parse_url($url);
 
-		if (!isset($parsedUrl['scheme'])
-			|| !in_array(strtolower($parsedUrl['scheme']), array('http', 'https'), true))
+		if (empty($parsedUrl['scheme'])
+			|| !in_array(strtolower($parsedUrl['scheme']), array('http', 'https'), true)
+			|| empty($parsedUrl['host'])
+			|| !$this->metadataHostIsAllowed($parsedUrl['host']))
 		{
 			return false;
 		}
@@ -1285,12 +1334,85 @@ class Miniorange_SamlControllerMyaccount extends FormController
 				'max_redirects' => 0,
 			),
 			'ssl' => array(
-				'verify_peer' => false,
-				'verify_peer_name' => false,
+				'verify_peer' => true,
+				'verify_peer_name' => true,
 			),
 		);
 
 		return @file_get_contents($url, false, stream_context_create($arrContextOptions));
+	}
+
+	/**
+	 * Allow a metadata host only when every resolved address is public.
+	 *
+	 * @param   string  $host  Hostname or IP from the metadata URL.
+	 *
+	 * @return  boolean
+	 *
+	 * @since   1.6
+	 */
+	private function metadataHostIsAllowed($host)
+	{
+		$host = trim($host, '[]');
+
+		if ($host === '')
+		{
+			return false;
+		}
+
+		$ips = filter_var($host, FILTER_VALIDATE_IP) ? array($host) : array_filter((array) gethostbynamel($host));
+
+		if (empty($ips))
+		{
+			return false;
+		}
+
+		foreach ($ips as $ip)
+		{
+			if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Reject an IdP login URL whose host is a private or reserved IP.
+	 *
+	 * A hostname is allowed so an internal IdP name can still be imported.
+	 *
+	 * @param   string  $loginUrl  SSO URL taken from IdP metadata.
+	 *
+	 * @return  boolean
+	 *
+	 * @since   1.6
+	 */
+	private function loginUrlIsAllowed($loginUrl)
+	{
+		if (!is_string($loginUrl) || $loginUrl === '')
+		{
+			return false;
+		}
+
+		$parsed = parse_url($loginUrl);
+
+		if (empty($parsed['scheme']) || empty($parsed['host'])
+			|| !in_array(strtolower($parsed['scheme']), array('http', 'https'), true))
+		{
+			return false;
+		}
+
+		$host = trim($parsed['host'], '[]');
+
+		if (filter_var($host, FILTER_VALIDATE_IP)
+			&& !filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 }

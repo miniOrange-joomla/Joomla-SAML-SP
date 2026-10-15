@@ -17,6 +17,7 @@ defined('_JEXEC') or die;
  * Contains Request Calls to Customer service.
  */
 use Joomla\CMS\Factory;
+use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Version;
 require_once 'MoConstants.php';
 require_once __DIR__ . DIRECTORY_SEPARATOR . 'mo-saml-utility.php';
@@ -70,7 +71,7 @@ class Mo_Saml_Local_Customer
 		}
 
 		$fields = array(
-			'companyName' => $_SERVER['SERVER_NAME'],
+			'companyName' => self::getSiteHost(),
 			'areaOfInterest' => 'Joomla SAML 2.0 SP SSO Plugin',
 			'firstname' => $currentUser->username,
 			'email' => $this->email,
@@ -128,7 +129,8 @@ class Mo_Saml_Local_Customer
 		$bccEmail = 'joomlasupport@xecurify.com';
 		$resolvedFeedbackEmail = !empty($feedbackEmail) ? $feedbackEmail : $email;
 		$fromEmail = $resolvedFeedbackEmail;
-		$content = '<div >Hello, <br><br><strong>Company :<a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" ></strong>' . $_SERVER['SERVER_NAME'] . '</a><br><br><strong>Email :<a href="mailto:' . $resolvedFeedbackEmail . '" target="_blank">' . $resolvedFeedbackEmail . '</a></strong><br><br><strong>Plugin Deactivated: </strong>' . $query1 . '<br><br><strong>Reason: </strong>' . $query . '</div>';
+		$siteHost = self::escapeSiteHost(self::getSiteHost());
+		$content = '<div >Hello, <br><br><strong>Company :<a href="' . $siteHost . '" target="_blank" ></strong>' . $siteHost . '</a><br><br><strong>Email :<a href="mailto:' . $resolvedFeedbackEmail . '" target="_blank">' . $resolvedFeedbackEmail . '</a></strong><br><br><strong>Plugin Deactivated: </strong>' . $query1 . '<br><br><strong>Reason: </strong>' . $query . '</div>';
 		$subject = "miniOrange Joomla SAML SP Free Feedback - " . $resolvedFeedbackEmail;
 
 		$fields = array(
@@ -245,7 +247,7 @@ class Mo_Saml_Local_Customer
 
 		$fields = array(
 			'firstName' => $currentUser->username,
-			'company' => $_SERVER['SERVER_NAME'],
+			'company' => self::getSiteHost(),
 			'email' => $qEmail,
 			'ccEmail' => 'joomlasupport@xecurify.com',
 			'phone' => $qPhone,
@@ -361,8 +363,9 @@ class Mo_Saml_Local_Customer
 		$webServer = !empty($serverSoftware) ? trim(explode('/', $serverSoftware)[0]) : 'Unknown';
 		$pluginInfo = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' | PHP ' . $phpVersion . ' | Web Server: ' . $webServer . '] : ' . $plan;
 
+		$siteHost = self::escapeSiteHost(self::getSiteHost());
 		$content = '<div >Hello, <br>
-                        <br><strong>Company :</strong><a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" >' . $_SERVER['SERVER_NAME'] . '</a><br><br>
+                        <br><strong>Company :</strong><a href="' . $siteHost . '" target="_blank" >' . $siteHost . '</a><br><br>
                         <strong>Email :</strong><a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a><br><br>
                         <strong>Plugin Info: </strong>' . $pluginInfo . '<br><br>
                         <strong>Description: </strong>' . $description . '</div>';
@@ -400,8 +403,9 @@ class Mo_Saml_Local_Customer
 
 		$pluginInfo = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' | PHP ' . $phpVersion . ' | Web Server: ' . $webServer . '] : ';
 
+		$siteHost = self::escapeSiteHost(self::getSiteHost());
 		$content = '<div>Hello, <br><br>
-                        <strong>Company :</strong><a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" >' . $_SERVER['SERVER_NAME'] . '</a><br><br>
+                        <strong>Company :</strong><a href="' . $siteHost . '" target="_blank" >' . $siteHost . '</a><br><br>
                         <strong>Plugin Info: </strong>' . $pluginInfo . '<br><br>
                         <strong>Email :</strong><a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a><br><br>
                         <strong>Time Zone:</strong> ' . $timeZone . '<br><br><strong>Date to set up call: </strong>' . $callDate . '<br><br>
@@ -442,6 +446,28 @@ class Mo_Saml_Local_Customer
 		}
 
 		return $pluginName;
+	}
+
+	/**
+	 * Site host taken from the Joomla request.
+	 *
+	 * @return  string
+	 */
+	private static function getSiteHost()
+	{
+		return Uri::getInstance()->getHost();
+	}
+
+	/**
+	 * Escape a site host before it is placed in an HTML email.
+	 *
+	 * @param   string  $host  Site host.
+	 *
+	 * @return  string
+	 */
+	private static function escapeSiteHost($host)
+	{
+		return htmlspecialchars($host, ENT_QUOTES, 'UTF-8');
 	}
 
 	public static function curlCall($url, $fieldString, $proxyNeeded)

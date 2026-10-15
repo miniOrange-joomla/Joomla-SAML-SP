@@ -107,6 +107,12 @@ CREATE TABLE IF NOT EXISTS `#__miniorange_saml_idp_attributes` (
 PRIMARY KEY (`id`)
 ) DEFAULT COLLATE=utf8_general_ci;
 
+CREATE TABLE IF NOT EXISTS `#__miniorange_saml_replay` (
+`saml_id` char(64) NOT NULL,
+`expires` int(11) NOT NULL,
+PRIMARY KEY (`saml_id`)
+) DEFAULT COLLATE=utf8_general_ci;
+
 
 
 INSERT IGNORE INTO `#__miniorange_saml_proxy_setup`(`id`) values (1) ;

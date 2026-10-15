@@ -38,5 +38,4 @@ class Mo_Proxy extends BasicEnum
 	const PROXY_HOST_NAME = "proxy_host_name";
 	const PORT_NUMBER = "port_number";
 	const USERNAME = "username";
-	const PASSWORD = "password";
 }

@@ -15,7 +15,7 @@ class MoConstants
 {
 	//const MO_SAML_SP = 'ALL';
 
-	Const MO_SAML_SP = 'ADFS';
+	const MO_SAML_SP = 'ADFS';
 	// const MO_SAML_SP = 'GOOGLEAPPS';
 
 	/**

@@ -16,7 +16,7 @@ class MoConstants
 	//const MO_SAML_SP = 'ALL';
 
 	// Const MO_SAML_SP = 'ADFS';
-	 const MO_SAML_SP = 'GOOGLEAPPS';
+	const MO_SAML_SP = 'GOOGLEAPPS';
 
 	/**
 	 * Default miniOrange cloud customer key. Override with MO_SAML_DEFAULT_CUSTOMER_KEY.

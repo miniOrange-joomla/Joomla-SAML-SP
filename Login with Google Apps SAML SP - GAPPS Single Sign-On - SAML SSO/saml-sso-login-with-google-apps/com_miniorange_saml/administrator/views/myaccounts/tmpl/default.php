@@ -210,6 +210,7 @@ function renderIdpSettingsTableRows($idpEntityId, $idpName, $spBaseUrl)
 						<form method="post"
 							action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.deleteCurrentIdp'); ?>"
 							class="mo_saml_display_inline">
+							<?php echo HTMLHelper::_('form.token'); ?>
 							<input type="hidden" name="idp_id" value="1" />
 							<button type="submit"
 								class="mo_saml_action_btn mo_saml_mini_section"
@@ -624,6 +625,7 @@ function description()
 					<form
 						action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.updateSPIssuerOrBaseUrl'); ?>"
 						method="post" name="updateissueer" id="identity_provider_update_form">
+						<?php echo HTMLHelper::_('form.token'); ?>
 						<div class="mo_boot_row mo_boot_m-4">
 							<div class="mo_boot_col-sm-4">
 								<span><?php echo Text::_('COM_MINIORANGE_SAML_BASE_URL'); ?> :</span>
@@ -1426,7 +1428,7 @@ function licensingPage()
 									</li>
 									<hr class="mo_boot_m-2">
 									<li><span>•</span>
-										<?php echo Text::_('COM_MINIORANGE_SAML_ADVANCE_ATTRIBUTE_MAPPING'); ?></li>
+										<?php echo Text::_('COM_MINIORANGE_SAML_ADVANCE_ATTRIBUTE_PROFILE_MAPPING'); ?></li>
 									<hr class="mo_boot_m-2">
 									<li><span>•</span> <?php echo Text::_('COM_MINIORANGE_SAML_SINGLE_LOGOUT'); ?></li>
 									<hr class="mo_boot_m-2">
@@ -2651,6 +2653,7 @@ function requestForDemo()
 						<div class="mo_boot_p-4 mo_saml_mini_section">
 							<form name="demo_request" method="post"
 								action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.requestForTrialPlan'); ?>">
+								<?php echo HTMLHelper::_('form.token'); ?>
 								<input type="hidden" name="option1" value="mo_saml_login_send_query" />
 
 								<div class="mo_boot_row mo_boot_mb-4">
@@ -2782,6 +2785,7 @@ function selectIdentityProvider()
 	<div class="mo_boot_col-sm-12 mo_main_saml_section">
 		<form action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.saveConfig'); ?>"
 			method="post" name="adminForm" id="identityProviderSettings_form" enctype="multipart/form-data">
+			<?php echo HTMLHelper::_('form.token'); ?>
 			<input type="hidden" name="option1" value="mo_saml_save_config">
 			<div class="mo_boot_row mo_boot_mt-3 mo_boot_d-flex mo_boot_align-items-center">
 				<div class="mo_boot_col-lg-8 mo_boot_p-0">
@@ -2928,7 +2932,7 @@ function selectIdentityProvider()
 								<div class="mo_boot_col-sm-7 mo_boot_p-0">
 									<input type="text" id="dynamicText" name="dynamic_link"
 										placeholder="Enter button name eg. Login with IDP"
-										value="<?php echo $dynamicLink; ?>" class="mo-form-control mo_boot_p-2">
+										value="<?php echo SAML_Utilities::escapeHtml($dynamicLink); ?>" class="mo-form-control mo_boot_p-2">
 									<?php echo $hideDynamicTextScript; ?>
 								</div>
 							</div>
@@ -3064,12 +3068,14 @@ function selectIdentityProvider()
 
 		<form name="f" id="mo_sp_exp_exportconfig" method="post"
 			action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.importexport'); ?>">
+			<?php echo HTMLHelper::_('form.token'); ?>
 		</form>
 		<div class="mo_boot_row <?php echo $uploadFormClass; ?>" id="upload_metadata_form">
 			<div class="mo_boot_col-sm-12 mo_boot_p-2 mo_saml_mini_section">
 				<form
 					action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.handleUploadMetadata'); ?>"
 					name="metadataForm" method="post" id="IDP_meatadata_form" enctype="multipart/form-data">
+					<?php echo HTMLHelper::_('form.token'); ?>
 					<div class="mo_boot_row mo_boot_m-4">
 						<div class="mo_boot_col-sm-12">
 							<h3 class="mo_saml_form_head">
@@ -3228,6 +3234,7 @@ function moSamlLocalSupport()
 						<div class="mo_boot_p-4 mo_saml_mini_section">
 							<form name="f" method="post" id="mo_saml_contact_us_form"
 								action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.contactUs'); ?>">
+								<?php echo HTMLHelper::_('form.token'); ?>
 								<input type="hidden" name="option1" value="mo_saml_login_send_query" />
 								<input type="hidden" name="client_timezone" id="mo_saml_client_timezone" value="" />
 								<input type="hidden" name="client_timezone_offset" id="mo_saml_client_timezone_offset" value="" />
@@ -3308,6 +3315,7 @@ function moSamlLocalSupport()
 				</div>
 				<div class="mo_boot_col-sm-12 mo_boot_my-3">
 					<form name="f" method="post" action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.meetingSetup'); ?>">
+						<?php echo HTMLHelper::_('form.token'); ?>
 						<div class="mo_boot_row">
 							<div class="mo_boot_col-sm-12 mo_boot_p-4 mo_saml_mini_section">
 								<div class="mo_boot_row mo_boot_mt-2">
@@ -3592,6 +3600,7 @@ function importExportConfiguration()
 									</button>
 									<form name="f" id="mo_sp_exp_exportconfig" method="post"
 										action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.importexport'); ?>">
+										<?php echo HTMLHelper::_('form.token'); ?>
 									</form>
 								</div>
 							</div>

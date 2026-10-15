@@ -9,6 +9,7 @@
  */
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 
 class Pkg_MiniorangeSAMLSSOInstallerScript
@@ -45,7 +46,25 @@ class Pkg_MiniorangeSAMLSSOInstallerScript
 	 */
 	public function update($parent)
 	{
+		if (method_exists(Factory::class, 'getContainer'))
+		{
+			$container = Factory::getContainer();
+			$key = 'Joomla\\Database\\DatabaseInterface';
+			$db = $container->has($key) ? $container->get($key) : Factory::getDbo();
+		}
+		else
+		{
+			$db = Factory::getDbo();
+		}
 
+		$db->setQuery(
+			'CREATE TABLE IF NOT EXISTS ' . $db->quoteName('#__miniorange_saml_replay') . ' ('
+			. $db->quoteName('saml_id') . ' char(64) NOT NULL, '
+			. $db->quoteName('expires') . ' int(11) NOT NULL, '
+			. 'PRIMARY KEY (' . $db->quoteName('saml_id') . ')'
+			. ') DEFAULT COLLATE=utf8_general_ci'
+		);
+		$db->execute();
 	}
 
 	/**

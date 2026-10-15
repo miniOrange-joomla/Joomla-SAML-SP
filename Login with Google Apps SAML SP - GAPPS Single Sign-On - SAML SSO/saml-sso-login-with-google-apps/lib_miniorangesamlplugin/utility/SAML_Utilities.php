@@ -16,6 +16,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Version;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\HTML\HTMLHelper;
 include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'DbHelper.php';
 include_once JPATH_SITE . DIRECTORY_SEPARATOR . 'administrator' . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_miniorange_saml' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo-saml-utility.php';
 
@@ -536,8 +537,8 @@ class SAML_Utilities
 			echo '<div style="font-family:Calibri;padding:0 3%;">
             <div style="color: #a94442;background-color: #f2dede;padding: 15px;margin-bottom: 20px;text-align:center;border:1px solid #E6B3B2;font-size:18pt;">' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERR_HEADER") . ' ERROR</div>
             <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERR") . 'Error: </strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_SSO_ERR_ONE") . '</p>
-                         <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_DESTINATION") . ': </strong>' . $msgDestination . '</p>
-                          <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_CUR_URL") . ': </strong>' . $currentURL . '</p>
+                         <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_DESTINATION") . ': </strong>' . self::escapeHtml($msgDestination) . '</p>
+                          <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_CUR_URL") . ': </strong>' . self::escapeHtml($currentURL) . '</p>
                       </div>
             </div>';
 			?>
@@ -588,7 +589,7 @@ class SAML_Utilities
 		}
 		catch (Exception $e)
 		{
-			echo 'Validation with key failed with exception: ' . $e->getMessage();
+			echo 'Validation with key failed with exception: ' . self::escapeHtml($e->getMessage());
 			$lastException = $e;
 		}
 
@@ -669,8 +670,8 @@ class SAML_Utilities
                 <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERR") . ': </strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_SSO_ERR_THREE") . '</p>
                 <p>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERROR_REPORT") . ':</p>
                 <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERROR_CAUSE") . ': </strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_SSO_ERR_FOUR") . '</p>
-                <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_EXPECTED_ID") . ': </strong>' . $issuer . '<p>
-                <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ACUTAL_ID") . ': </strong>' . $issuerToValidateAgainst . '</p>
+                <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_EXPECTED_ID") . ': </strong>' . self::escapeHtml($issuer) . '<p>
+                <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ACUTAL_ID") . ': </strong>' . self::escapeHtml($issuerToValidateAgainst) . '</p>
                 <div style="margin:3%;display:block;text-align:center;">
                     <input style="padding:1%;background: #3d618f!important;cursor: pointer;font-size:15px;border-width: 1px;border-style: solid;border-radius: 3px;white-space: nowrap;box-sizing: border-box;border-color: #3d618f;box-shadow: 0px 1px 0px rgba(120, 200, 230, 0.6) inset;color: #FFF;" type="button" value="' . Text::_("LIB_MINIORANGESAMLPLUGIN_DONE_BTN") . '" onClick="self.close();">
                 </div>
@@ -698,6 +699,7 @@ class SAML_Utilities
                         <p>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ADMIN_TOOL_LINK") . '<a href="https://faq.miniorange.com/knowledgebase/joomla-saml-sso-not-working-while-using-admin-tools/" target="_blank" >' . Text::_("LIB_MINIORANGESAMLPLUGIN_ADMIN_TOOL_GIVEN_LINK") . '</a> ' . Text::_("LIB_MINIORANGESAMLPLUGIN_ADMIN_TOOL_ISSUE") . '</p>
                         <div> 
                             <form method="post" name="f" id ="do_not_show_again" action="' . Route::_('index.php?option=com_miniorange_saml&task=myaccount.doNotShowAgain') . '" > 
+                                ' . HTMLHelper::_('form.token') . '
                                 <input type="checkbox"  name="do_not_show_again" class="mo_saml_custom_checkbox" value="1">' . Text::_("LIB_MINIORANGESAMLPLUGIN_CHECKBOX_TEXT") . '
                             </form> 
                         </div>
@@ -708,6 +710,7 @@ class SAML_Utilities
                     </div>
                 </div>
                 <form method="post" id="close_popup" name="f" action="' . Route::_('index.php?option=com_miniorange_saml&task=myaccount.closePopup') . '" > 
+                ' . HTMLHelper::_('form.token') . '
                 </form>  
             
             </div>
@@ -878,7 +881,7 @@ class SAML_Utilities
 			else
 			{
 				echo Text::_("LIB_MINIORANGESAMLPLUGIN_EXPECTED_IDP_ID");
-			}echo': </strong>' . $issuer . '<p>
+			}echo': </strong>' . self::escapeHtml($issuer) . '<p>
                     <p style="font-size:15px;"><strong  style="margin-left:15px;">';
 
 			if ($type == 'change_sp_id')
@@ -888,7 +891,7 @@ class SAML_Utilities
 			else
 			{
 				echo Text::_("LIB_MINIORANGESAMLPLUGIN_ACUTAL_IDP_ID");
-			}echo': </strong>' . $issuerToValidateAgainst . '</p>';
+			}echo': </strong>' . self::escapeHtml($issuerToValidateAgainst) . '</p>';
 
 			if ($type == 'change_sp_id')
 			{
@@ -912,6 +915,7 @@ class SAML_Utilities
                     <div style="font-size:14pt;">' . Text::_("LIB_MINIORANGESAMLPLUGIN_EXPORT_CONFIG") . '</div>
                     <div style="margin:3%;display:block;text-align:center;">
                         <form name="f" method="post" action="' . Route::_('index.php?option=com_miniorange_saml&task=myaccount.importexport') . '">
+                                ' . HTMLHelper::_('form.token') . '
                                 <input type="hidden" name="test_configuration" value="true">
                                 <input id="mo_sp_exp_exportconfig" type="button"  style="padding:1%;background: #3d618f!important;cursor: pointer;font-size:15px;border-width: 1px;border-style: solid;border-radius: 3px;white-space: nowrap;box-sizing: border-box;border-color: #3d618f;box-shadow: 0px 1px 0px rgba(120, 200, 230, 0.6) inset;color: #FFF;" onclick="submit();" value="' . Text::_("LIB_MINIORANGESAMLPLUGIN_EXPORT_CONFIG_BTN") . '" />
                                 <input style="padding:1%;background: #3d618f!important;cursor: pointer;font-size:15px;border-width: 1px;border-style: solid;border-radius: 3px;white-space: nowrap;box-sizing: border-box;border-color: #3d618f;box-shadow: 0px 1px 0px rgba(120, 200, 230, 0.6) inset;color: #FFF;" type="button" value="' . Text::_("LIB_MINIORANGESAMLPLUGIN_DONE_BTN") . '" onClick="self.close();">
@@ -1225,9 +1229,9 @@ class SAML_Utilities
 			'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' .
 			$decrypted .
 			'</root>';
-		$newDoc = new DOMDocument;
+		$newDoc = self::loadUntrustedXml($xml);
 
-		if (!@$newDoc->loadXML($xml))
+		if ($newDoc === false)
 		{
 			throw new Exception('Failed to parse decrypted XML. Maybe the wrong sharedkey was used?');
 		}
@@ -1331,6 +1335,137 @@ class SAML_Utilities
 		return $url;
 	}
 
+	/**
+	 *
+	 * @param   mixed  $value  Value taken from SAML, the database, or an exception.
+	 *
+	 * @return  string
+	 */
+	public static function escapeHtml($value)
+	{
+		return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+	}
+
+	/**
+	 * Parse XML from a SAML response, metadata file, or decrypted assertion.
+	 *
+	 * External entities and DOCTYPE declarations are rejected. A normal SAML
+	 * document has neither, so login and metadata import are unchanged.
+	 *
+	 * @param   string  $xml  Untrusted XML.
+	 *
+	 * @return  DOMDocument|false
+	 */
+	public static function loadUntrustedXml($xml)
+	{
+		if (!is_string($xml) || stripos($xml, '<!DOCTYPE') !== false)
+		{
+			return false;
+		}
+
+		libxml_set_external_entity_loader(function () {
+			return null;
+		});
+
+		try
+		{
+			$document = new DOMDocument();
+			$loaded = $document->loadXML($xml, LIBXML_NONET);
+		}
+		finally
+		{
+			libxml_set_external_entity_loader(null);
+		}
+
+		if (!$loaded)
+		{
+			return false;
+		}
+
+		return $document;
+	}
+
+	/**
+	 * Reject a SAML response or assertion that was already accepted.
+	 *
+	 * The #__miniorange_saml_replay table is created by install and update SQL.
+	 * A new IdP login has new IDs, so a normal SSO click is unchanged.
+	 *
+	 * @param   string|null  $responseId    Response ID attribute.
+	 * @param   string|null  $assertionId   Assertion ID attribute.
+	 * @param   int|null     $notOnOrAfter  Assertion expiry timestamp.
+	 *
+	 * @return  boolean  True when this message was already used.
+	 */
+	public static function isReplayedSamlMessage($responseId, $assertionId, $notOnOrAfter)
+	{
+		$ids = array();
+
+		if (is_string($responseId) && $responseId !== '')
+		{
+			$ids[] = hash('sha256', 'R:' . $responseId);
+		}
+
+		if (is_string($assertionId) && $assertionId !== '')
+		{
+			$ids[] = hash('sha256', 'A:' . $assertionId);
+		}
+
+		if (!$ids)
+		{
+			return false;
+		}
+
+		$expires = ($notOnOrAfter !== null) ? ((int) $notOnOrAfter + 120) : (time() + 300);
+
+		try
+		{
+			$db = MoSamlDbHelper::getDb();
+			$db->setQuery(
+				$db->getQuery(true)
+					->delete($db->quoteName('#__miniorange_saml_replay'))
+					->where($db->quoteName('expires') . ' < ' . (int) time())
+			);
+			$db->execute();
+
+			foreach ($ids as $id)
+			{
+				$db->setQuery(
+					$db->getQuery(true)
+						->insert($db->quoteName('#__miniorange_saml_replay'))
+						->columns(array($db->quoteName('saml_id'), $db->quoteName('expires')))
+						->values($db->quote($id) . ',' . (int) $expires)
+				);
+				$db->execute();
+			}
+		}
+		catch (\Exception $e)
+		{
+			return self::isDuplicateKey($e);
+		}
+
+		return false;
+	}
+
+	/**
+	 * True when the database rejected an insert because the ID is already stored.
+	 *
+	 * @param   \Exception  $e  Database exception.
+	 *
+	 * @return  boolean
+	 */
+	private static function isDuplicateKey($e)
+	{
+		$message = $e->getMessage();
+
+		if ($e->getPrevious())
+		{
+			$message .= ' ' . $e->getPrevious()->getMessage();
+		}
+
+		return strpos($message, '1062') !== false || stripos($message, 'Duplicate') !== false;
+	}
+
 	public static function moSamlShowTestResult($username, $attrs, $siteUrl)
 	{
 		self::loadLanguage();
@@ -1381,7 +1516,7 @@ class SAML_Utilities
 
 		if (!empty($username))
 		{
-			echo '<div style="margin-bottom:20px;margin-top:20px;"><span style="font-size:14pt;"><strong>Hello</strong>, ' . $username . '</span></div>';
+			echo '<div style="margin-bottom:20px;margin-top:20px;"><span style="font-size:14pt;"><strong>Hello</strong>, ' . self::escapeHtml($username) . '</span></div>';
 		}
 
 		echo '<div class="saml-test-container" style="overflow-x:auto;">
@@ -1402,9 +1537,10 @@ class SAML_Utilities
 			{
 				$rowCount++;
 				$rowClass = ($rowCount % 2 == 0) ? 'background: #f8f9fa;' : 'background: #ffffff;';
+				$safeValues = array_map('SAML_Utilities::escapeHtml', (array) $value);
 				echo "<tr style='{$rowClass} transition: background-color 0.2s ease;'>
-                        <td style='padding: 18px; border-bottom: 1px solid #e9ecef; font-weight: 500; font-size: 16px;color:rgb(0, 0, 0); word-break: break-word; overflow-wrap: break-word; max-width: 0; vertical-align: top;'>" . $key . "</td>
-                        <td style='padding: 18px; border-bottom: 1px solid #e9ecef; font-size: 16px;color:rgb(0, 0, 0); word-break: break-word; overflow-wrap: break-word; max-width: 0; vertical-align: top;'>" . implode('<br/>', (array) $value) . "</td>
+                        <td style='padding: 18px; border-bottom: 1px solid #e9ecef; font-weight: 500; font-size: 16px;color:rgb(0, 0, 0); word-break: break-word; overflow-wrap: break-word; max-width: 0; vertical-align: top;'>" . self::escapeHtml($key) . "</td>
+                        <td style='padding: 18px; border-bottom: 1px solid #e9ecef; font-size: 16px;color:rgb(0, 0, 0); word-break: break-word; overflow-wrap: break-word; max-width: 0; vertical-align: top;'>" . implode('<br/>', $safeValues) . "</td>
                       </tr>";
 			}
 		}
@@ -1775,7 +1911,7 @@ class SAML_Utilities
 		echo '<div style="font-family:Calibri;padding:0 3%;">';
 		echo '<div style="color: #a94442;background-color: #f2dede;padding: 15px;margin-bottom: 20px;text-align:center;border:1px solid #E6B3B2;font-size:18pt;"> ' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERR_HEADER") . '</div>
         <div style="color: #a94442;font-size:14pt; margin-bottom:20px;"><p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERR") . ': </strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_UNSUCCESSFUL_SSO") . '</p>
-        <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERROR_CAUSE") . ': </strong>' . $msg . '</p>';
+        <p><strong>' . Text::_("LIB_MINIORANGESAMLPLUGIN_ERROR_CAUSE") . ': </strong>' . self::escapeHtml($msg) . '</p>';
 		echo str_repeat('&nbsp;', 15);
 		echo '</div>
             <div style="margin:3%;display:block;text-align:center;">

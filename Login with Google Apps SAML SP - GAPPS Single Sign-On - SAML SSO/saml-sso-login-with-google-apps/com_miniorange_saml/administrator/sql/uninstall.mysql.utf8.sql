@@ -7,3 +7,5 @@ DROP TABLE IF EXISTS `#__miniorange_saml_role_mapping`;
 DROP TABLE IF EXISTS `#__miniorange_saml_config`;
 
 DROP TABLE IF EXISTS `#__miniorange_saml_idp_attributes`;
+
+DROP TABLE IF EXISTS `#__miniorange_saml_replay`;
