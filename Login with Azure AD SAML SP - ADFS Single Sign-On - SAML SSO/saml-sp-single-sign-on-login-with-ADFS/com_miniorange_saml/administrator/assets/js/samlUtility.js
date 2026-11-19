@@ -490,13 +490,13 @@ function copySsoUrl(ssoUrl) {
 }
 
 function showImportExportConfig() {
-    document.getElementById('idp_list_table').style.display = 'none';
+    document.getElementById('mo_saml_idp_setup_section').style.display = 'none';
     document.getElementById('mo_saml_import_export_id').style.display = 'block';
 }
 
 function backToIdpList() {
     document.getElementById('mo_saml_import_export_id').style.display = 'none';
-    document.getElementById('idp_list_table').style.display = 'block';
+    document.getElementById('mo_saml_idp_setup_section').style.display = 'block';
 }
 
 function toggleContent(buttonId, contentId) {

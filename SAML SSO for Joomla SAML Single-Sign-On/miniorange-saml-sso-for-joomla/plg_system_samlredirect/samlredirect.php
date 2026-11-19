@@ -304,7 +304,7 @@ class PlgSystemSamlredirect extends CMSPlugin
 									<?php echo HTMLHelper::_('form.token'); ?>
 									   <h1><?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_FEEDBACK_14');?> 
 										<input type="hidden" name="mojspfree_skip_feedback" value="mojspfree_skip_feedback"/>
-										<button type="button" class="mojsp-close-btn" onClick="skipSAMLSPForm()" title="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_SKIP_BTN'); ?>" aria-label="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_SKIP_BTN'); ?>" style="cursor:pointer;font-size:36px;color:#fff;margin-left:6px;background:none;border:none;padding:0;line-height:1;display:inline-flex;align-items:center;">&times;</button>
+										<button type="submit" class="mojsp-close-btn" title="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_SKIP_BTN'); ?>" aria-label="<?php echo Text::_('PLG_SYSTEM_SAMLREDIRECT_SKIP_BTN'); ?>" style="cursor:pointer;font-size:36px;color:#fff;margin-left:6px;background:none;border:none;padding:0;line-height:1;display:inline-flex;align-items:center;">&times;</button>
 										<?php
 										$this->renderFeedbackHiddenIds($tpostData['cid']);
 										?>
@@ -367,10 +367,6 @@ class PlgSystemSamlredirect extends CMSPlugin
 										}
 										jQuery('#query_feedback').prop('required', true).attr('minlength', 10);
 									});
-
-									function skipSAMLSPForm(){
-										jQuery('#mojspfree_feedback_form_close').submit();
-									}
 								</script>
 								<?php
 								exit;
@@ -774,6 +770,7 @@ class PlgSystemSamlredirect extends CMSPlugin
 		{
 			$this->showExpiryError('Invalid SAML Response.', 'The login response could not be read.');
 		}
+
 		$samlResponseXml = $document->firstChild;
 		$doc = $document->documentElement;
 

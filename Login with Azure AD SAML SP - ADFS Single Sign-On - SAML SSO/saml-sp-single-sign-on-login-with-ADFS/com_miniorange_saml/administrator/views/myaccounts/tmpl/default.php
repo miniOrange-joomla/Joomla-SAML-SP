@@ -26,7 +26,9 @@ $document->addScript(Uri::base() . 'components/com_miniorange_saml/assets/js/boo
 $document->addScript(Uri::base() . 'components/com_miniorange_saml/assets/js/idp-settings.js');
 
 // Add your custom CSS files
-$document->addStyleSheet(Uri::base() . 'components/com_miniorange_saml/assets/css/mo_saml_style.css');
+$moSamlStylePath = JPATH_COMPONENT_ADMINISTRATOR . '/assets/css/mo_saml_style.css';
+$moSamlStyleVer = is_file($moSamlStylePath) ? filemtime($moSamlStylePath) : '1';
+$document->addStyleSheet(Uri::base() . 'components/com_miniorange_saml/assets/css/mo_saml_style.css?v=' . $moSamlStyleVer);
 $document->addStyleSheet(Uri::base() . 'components/com_miniorange_saml/assets/css/bootstrap-select-min.css');
 $document->addStyleSheet(Uri::base() . 'components/com_miniorange_saml/assets/css/miniorange_boot.css');
 $document->addStyleSheet(Uri::base() . 'components/com_miniorange_saml/assets/css/idp-settings.css');
@@ -113,138 +115,8 @@ function buildTabNavHtml($tabs, $samlActiveTab)
  */
 function renderIdpTabContent($get)
 {
-	if (isset($get['id']))
-	{
-		selectIdentityProvider();
-	}
-	else
-	{
-		identityProviderSettings();
-		importExportConfiguration();
-	}
-}
-
-/**
- * Render IDP settings header action buttons.
- *
- * @param   bool  $idpConfigured  Whether an IDP is configured.
- *
- * @return  void
- */
-function renderIdpSettingsHeaderButtons($idpConfigured)
-{
-	if ($idpConfigured)
-	{
-		?>
-		<a href="https://plugins.miniorange.com/joomla-sso-ldap-mfa-solutions?section=saml-sp"
-			target="_blank" class="mo_boot_btn btn_cstm mo_boot_mx-xl-4">
-			<?php echo Text::_('COM_MINIORANGE_SAML_GUIDES'); ?>
-		</a>
-		<button class="mo_boot_btn btn_cstm mo_saml_block_cursor" disabled
-			title="Upgrade to Premium to add multiple IDPs">
-			<i class="fa fa-lock"></i> <?php echo Text::_('COM_MINIORANGE_SAML_ADD_NEW_IDP'); ?>
-			<sup><strong><a href='#' class='premium' onclick="moSAMLUpgrade();"> <img
-							class="crown_img_small mo_boot_mx-2"
-							src="<?php echo Uri::base(); ?>/components/com_miniorange_saml/assets/images/crown.webp"></a></strong></sup>
-		</button>
-		<?php
-	}
-	else
-	{
-		?>
-		<a href="https://plugins.miniorange.com/joomla-sso-ldap-mfa-solutions?section=saml-sp"
-			target="_blank" class="mo_boot_btn btn_cstm mo_boot_mx-xl-4">
-			<?php echo Text::_('COM_MINIORANGE_SAML_GUIDES'); ?>
-		</a>
-		<a href="<?php echo Route::_('index.php?option=com_miniorange_saml&tab=idp&id=new'); ?>"
-			class="mo_boot_btn btn_cstm">
-			<i class="fa fa-plus"></i> <?php echo Text::_('COM_MINIORANGE_SAML_ADD_NEW_IDP'); ?>
-		</a>
-		<?php
-	}
-}
-
-/**
- * Render IDP settings table rows.
- *
- * @param   string  $idpEntityId  IDP entity ID.
- * @param   string  $idpName      IDP display name.
- * @param   string  $spBaseUrl    SP base URL.
- *
- * @return  void
- */
-function renderIdpSettingsTableRows($idpEntityId, $idpName, $spBaseUrl)
-{
-	if (!empty($idpEntityId))
-	{
-		?>
-		<tr class="idp-row" data-idp-name="<?php echo htmlspecialchars($idpName); ?>">
-			<td>
-				<div class="mo_saml_idp_name mo_boot_p-4 mo_boot_text-center">
-					<strong><?php echo !empty($idpName) ? htmlspecialchars($idpName) : 'IDP 1'; ?></strong>
-				</div>
-			</td>
-			<td>
-				<div class="mo_boot_p-4 mo_boot_text-center">
-					<span id="sso_url" title="<?php echo $spBaseUrl . '?morequest=sso'; ?>"
-						class="mo_saml_highlight_background_url_note mo_boot_d-inline-block">
-						<strong><?php echo $spBaseUrl . '?morequest=sso'; ?></strong>
-					</span>
-				</div>
-			</td>
-			<td>
-				<div class="mo_saml_actions_container mo_boot_pl-lg-5 mo_boot_pr-lg-5">
-					<div class="mo_saml_actions_bar mo_saml_mini_section">
-						<button class="mo_saml_action_btn mo_saml_mini_section"
-							onclick="copyToClipboard('#sso_url')"
-							title="<?php echo Text::_('COM_MINIORANGE_SAML_COPY'); ?>">
-							<i class="fa fa-copy"></i>
-						</button>
-						<div class="mo_saml_action_separator"></div>
-						<a href="<?php echo Route::_('index.php?option=com_miniorange_saml&tab=idp&id=1'); ?>"
-							class="mo_saml_action_btn mo_saml_mini_section"
-							title="<?php echo Text::_('COM_MINIORANGE_SAML_EDIT'); ?>">
-							<i class="fa fa-edit"></i>
-						</a>
-						<div class="mo_saml_action_separator"></div>
-						<form method="post"
-							action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.deleteCurrentIdp'); ?>"
-							class="mo_saml_display_inline">
-							<?php echo HTMLHelper::_('form.token'); ?>
-							<input type="hidden" name="idp_id" value="1" />
-							<button type="submit"
-								class="mo_saml_action_btn mo_saml_mini_section"
-								title="<?php echo Text::_('COM_MINIORANGE_SAML_DELETE'); ?>"
-								onclick="return confirm('<?php echo Text::_('COM_MINIORANGE_SAML_DELETE_IDP_CONFIRM'); ?>')">
-								<i class="fa fa-trash-o"></i>
-							</button>
-						</form>
-						<div class="mo_saml_action_separator"></div>
-						<button class="mo_saml_test_btn mo_saml_mini_section"
-							onclick="showTestWindow()"
-							title="<?php echo Text::_('COM_MINIORANGE_SAML_TEST_CONFIG_TITLE'); ?>"
-							<?php echo !$idpEntityId ? 'disabled' : ''; ?>>
-							Test
-						</button>
-					</div>
-				</div>
-			</td>
-		</tr>
-		<?php
-	}
-	else
-	{
-		?>
-		<tr>
-			<td colspan="4" class="text-center mo_saml_no_data">
-				<div class="mo_saml_empty_state">
-					<i class="fa fa-users fa-3x"></i>
-					<p><?php echo Text::_('COM_MINIORANGE_SAML_NO_IDP_CONFIGURED'); ?></p>
-				</div>
-			</td>
-		</tr>
-		<?php
-	}
+	selectIdentityProvider();
+	importExportConfiguration();
 }
 
 /**
@@ -317,17 +189,10 @@ if ($tabsJson)
 	}
 }
 
-$cmsVersionCheck = $cmsVersion <= 4.0;
+$isJoomla3 = version_compare($cmsVersion, '4.0', '<');
 
-if ($cmsVersionCheck)
+if ($isJoomla3)
 {
-	$tabs['request_demo'] = [
-		'id' => 'request_demo_tab',
-		'href' => '#request-demo',
-		'label' => 'COM_MINIORANGE_SAML_FREE_TRIAL',
-		'icon' => 'fa-demo'
-	];
-
 	$tabs['support_tab'] = [
 		'id' => 'support-tb',
 		'href' => '#support-tab',
@@ -454,16 +319,25 @@ $testConfig = isset($get['test-config']) ? true : false;
 if (isset($get['tab']) && !empty($get['tab']))
 {
 	$samlActiveTab = $get['tab'];
-	?>
-	<script>
-		jQuery(document).ready(function () {
-			jQuery('#subhead-container').css('min-height', '55px');
-			var subheadDiv = document.getElementById('subhead-container');
-			var trialButton = '<div class=""> <a class="mo_saml_subhead_container mo_boot_btn btn_cstm" href="<?php echo Route::_('index.php?option=com_miniorange_saml&tab=support_tab') ?>"><i class="fa fa-support mx-1"></i><?php echo Text::_('COM_MINIORANGE_SAML_SUPPORT_BTN'); ?></a><a class="mo_saml_subhead_container mo_boot_btn btn_cstm" href="<?php echo Route::_('index.php?option=com_miniorange_saml&tab=request_demo') ?>"><i class="fa fa-envelope mx-1"></i><?php echo Text::_('COM_MINIORANGE_SAML_FREE_TRIAL'); ?></a></div> ';
-			subheadDiv.innerHTML = trialButton;
-		});
-	</script>
-	<?php
+
+	if (!$isJoomla3)
+	{
+		?>
+		<script>
+			jQuery(document).ready(function () {
+				var subheadDiv = document.getElementById('subhead-container');
+
+				if (!subheadDiv) {
+					return;
+				}
+
+				jQuery('#subhead-container').css('min-height', '55px');
+				var trialButton = '<div class=""> <a class="mo_saml_subhead_container mo_boot_btn btn_cstm" href="<?php echo Route::_('index.php?option=com_miniorange_saml&tab=support_tab') ?>"><i class="fa fa-support mx-1"></i><?php echo Text::_('COM_MINIORANGE_SAML_SUPPORT_BTN'); ?></a><a class="mo_saml_subhead_container mo_boot_btn btn_cstm" href="https://playground.miniorange.com/joomla.php" target="_blank" rel="noopener noreferrer"><i class="fa fa-envelope mx-1"></i><?php echo Text::_('COM_MINIORANGE_SAML_FREE_TRIAL'); ?></a></div> ';
+				subheadDiv.innerHTML = trialButton;
+			});
+		</script>
+		<?php
+	}
 }
 ?>
 <?php
@@ -479,6 +353,16 @@ if ($testConfig)
 $tabNavHtml = buildTabNavHtml($tabs, $samlActiveTab);
 
 ?>
+<?php if ($isJoomla3)
+:
+	?>
+<div class="mo_boot_container-fluid mo_saml_plugin mo_saml_j3_trial mo_boot_text-right">
+	<a class="mo_saml_subhead_container mo_boot_btn btn_cstm" href="https://playground.miniorange.com/joomla.php" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank'); return false;">
+		<i class="fa fa-envelope"></i><?php echo Text::_('COM_MINIORANGE_SAML_FREE_TRIAL'); ?>
+	</a>
+</div>
+<?php endif; ?>
+
 <div class="mo_boot_container-fluid mo_saml_plugin">
 	<div class="mo_boot_row mo_saml_navbar">
 		<?php echo $tabNavHtml; ?>
@@ -488,8 +372,10 @@ $tabNavHtml = buildTabNavHtml($tabs, $samlActiveTab);
 <div class="mo_boot_container-fluid mo_saml_tab-content mo_saml_plugin">
 	<div class="tab-content" id="myTabContent">
 		<div id="overview_plugin" class="tab-pane <?php echo ($samlActiveTab === 'overview') ? 'active' : ''; ?>">
-			<div class="mo_boot_row">
-				<?php showPluginOverview(); ?>
+			<div class="mo_ov_wrap">
+				<div class="mo_boot_row">
+					<?php showPluginOverview(); ?>
+				</div>
 			</div>
 		</div>
 
@@ -539,47 +425,236 @@ $tabNavHtml = buildTabNavHtml($tabs, $samlActiveTab);
 </div>
 
 <?php
+function moOverviewIcon($name)
+{
+	$icons = array(
+		'check' => '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#16A34A"/><path d="M6 10.2l2.5 2.5L14.2 7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+		'azure' => '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#0089D6" d="M27.2 5.5L45 39H30.6L19.6 18.2 27.2 5.5z"/><path fill="#0078D4" d="M18.4 16.8L6.5 39h17.2l4.4-8.2L18.4 16.8z"/><path fill="#50E6FF" d="M19.6 18.2l4.2 12.6L30.6 39h-6.9L18.4 16.8l1.2 1.4z"/></svg>',
+		'adfs' => '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#F25022" d="M4 4h18.5v18.5H4z"/><path fill="#7FBA00" d="M25.5 4H44v18.5H25.5z"/><path fill="#00A4EF" d="M4 25.5h18.5V44H4z"/><path fill="#FFB900" d="M25.5 25.5H44V44H25.5z"/></svg>',
+		'okta' => '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="15" fill="none" stroke="#1A1A1A" stroke-width="7"/></svg>',
+		'google' => '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.2 35.1 26.7 36 24 36c-5.3 0-9.8-3.4-11.4-8.1l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.9 2.6-2.7 4.8-5 6.3l6.3 5.3C39.8 36.7 44 31.5 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>',
+		'salesforce' => '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#00A1E0" d="M20 35.5c-2.8 0-5.2-1.4-6.7-3.5-.9.3-1.8.5-2.8.5-3.7 0-6.7-3-6.7-6.7 0-3 2-5.6 4.8-6.5.7-4.1 4.3-7.3 8.6-7.3 2.7 0 5.1 1.2 6.8 3.1 1.4-1.7 3.5-2.8 5.9-2.8 4.4 0 8 3.6 8 8 0 .4 0 .9-.1 1.3 2.7 1 4.6 3.6 4.6 6.7 0 3.9-3.2 7.1-7.1 7.1-.9 0-1.8-.2-2.6-.5-1.4 2-3.6 3.3-6.1 3.3-1.2 0-2.3-.3-3.3-.8-1 .5-2 0.8-3.3.8z"/></svg>',
+		'shibboleth' => '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#E11D2E" d="M25 6c7 5 10 11 10 18 0 5-2 9-5 11 6-1 11-6 11-13C41 12 34 6 25 6z"/><path fill="#1F2937" d="M23 42c-7-5-10-11-10-18 0-5 2-9 5-11-6 1-11 6-11 13 0 10 7 16 16 16z"/></svg>',
+		'keycloak' => '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#1A1A1A" d="M24 4l16.5 9.5v19L24 44 7.5 32.5v-19z"/><circle cx="24" cy="21" r="4.2" fill="#2DD4BF"/><path fill="#2DD4BF" d="M21.6 25.2h4.8V36h-4.8z"/></svg>',
+		'any' => '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="14" cy="24" r="3.2" fill="#64748B"/><circle cx="24" cy="24" r="3.2" fill="#64748B"/><circle cx="34" cy="24" r="3.2" fill="#64748B"/></svg>',
+		'guide' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#3B82F6" d="M6 2h8.5L20 7.5V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path fill="#DBEAFE" d="M14 2.5V8h5.5z"/><path fill="#fff" d="M7.5 12h9v1.5h-9zm0 3h9v1.5h-9zm0 3h6v1.5h-6z"/></svg>',
+		'video' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#FF0000" d="M23 12.2s0-3.1-.4-4.5c-.2-.9-.9-1.6-1.8-1.8C19.2 5.5 12 5.5 12 5.5s-7.2 0-8.8.4c-.9.2-1.6.9-1.8 1.8C1 9.1 1 12.2 1 12.2s0 3.1.4 4.5c.2.9.9 1.6 1.8 1.8 1.6.4 8.8.4 8.8.4s7.2 0 8.8-.4c.9-.2 1.6-.9 1.8-1.8.4-1.4.4-4.5.4-4.5z"/><path fill="#fff" d="M9.8 9.1v6.2l5.4-3.1z"/></svg>',
+		'trial' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#3B82F6" stroke-width="1.7" stroke-linecap="round" d="M6.2 12.2V11a5.8 5.8 0 0 1 11.6 0v1.2"/><rect x="3.4" y="11.6" width="3.5" height="6.2" rx="1.5" fill="#3B82F6"/><rect x="17.1" y="11.6" width="3.5" height="6.2" rx="1.5" fill="#3B82F6"/><path fill="none" stroke="#3B82F6" stroke-width="1.7" stroke-linecap="round" d="M19 17.6v1.1a2.3 2.3 0 0 1-2.3 2.3H14.2"/></svg>',
+		'more' => '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12.5" rx="2" fill="#F59E0B"/><path fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" d="M4 8.2l8 5.4 8-5.4"/></svg>',
+	);
+
+	return isset($icons[$name]) ? $icons[$name] : '';
+}
+
 function showPluginOverview()
 {
-	$pluginDescription = Text::_('COM_MINIORANGE_SAML_IDP_ALL');
+	$version = '';
+	$manifest = JPATH_COMPONENT_ADMINISTRATOR . '/miniorange_saml.xml';
+
+	if (is_readable($manifest))
+	{
+		$xml = simplexml_load_file($manifest);
+
+		if ($xml && isset($xml->version))
+		{
+			$version = trim((string) $xml->version);
+		}
+	}
+
+	$extensionEnabled = PluginHelper::isEnabled('authentication', 'miniorangesaml')
+		&& PluginHelper::isEnabled('system', 'samlredirect');
+
+	$providers = array(
+		array(
+			'icon'  => 'azure',
+			'image' => 'joomla-azure-ad.webp',
+			'label' => 'COM_MINIORANGE_SAML_OV_IDP_ENTRA',
+			'href'  => 'https://plugins.miniorange.com/joomla-single-sign-sso-using-azure-ad-idp',
+		),
+		array(
+			'icon'  => 'adfs',
+			'image' => 'setup-adfs.webp',
+			'label' => 'COM_MINIORANGE_SAML_OV_IDP_ADFS',
+			'href'  => 'https://plugins.miniorange.com/guide-joomla-single-sign-sso-using-adfs-idp',
+		),
+		array(
+			'icon'  => 'okta',
+			'image' => 'okta-guide-logo.webp',
+			'label' => 'COM_MINIORANGE_SAML_OV_IDP_OKTA',
+			'href'  => 'https://plugins.miniorange.com/joomla-single-sign-sso-using-okta-idp',
+		),
+		array(
+			'icon'  => 'google',
+			'label' => 'COM_MINIORANGE_SAML_OV_IDP_GOOGLE',
+			'href'  => 'https://plugins.miniorange.com/joomla-single-sign-sso-using-google-apps-idp',
+		),
+		array(
+			'icon'  => 'salesforce',
+			'image' => 'joomla-salesforce.webp',
+			'label' => 'COM_MINIORANGE_SAML_OV_IDP_SALESFORCE',
+			'href'  => 'https://plugins.miniorange.com/joomla-single-sign-sso-using-salesforce-idp',
+		),
+		array(
+			'icon'  => 'shibboleth',
+			'image' => 'shibboleth.webp',
+			'label' => 'COM_MINIORANGE_SAML_OV_IDP_SHIBBOLETH',
+			'href'  => 'https://plugins.miniorange.com/guide-to-setup-shibboleth3-as-idp-with-joomla',
+		),
+		array(
+			'icon'  => 'keycloak',
+			'image' => 'Keycloak-logo.png',
+			'label' => 'COM_MINIORANGE_SAML_OV_IDP_KEYCLOAK',
+			'href'  => 'https://plugins.miniorange.com/joomla-single-sign-on-sso-using-jboss-keycloak-idp',
+		),
+		array(
+			'icon'  => 'any',
+			'label' => 'COM_MINIORANGE_SAML_OV_IDP_ANY',
+			'href'  => 'https://plugins.miniorange.com/joomla-sso-ldap-mfa-solutions?section=saml-sp',
+		),
+	);
 
 	if (MoConstants::MO_SAML_SP == 'ADFS')
 	{
-		$pluginDescription = Text::_('COM_MINIORANGE_SAML_SP_ADFS');
+		$providers = array($providers[1]);
 	}
 	elseif (MoConstants::MO_SAML_SP == 'GOOGLEAPPS')
 	{
-		$pluginDescription = Text::_('COM_MINIORANGE_SAML_SP_GOOGLE_APPS');
+		$providers = array($providers[3]);
 	}
 
+	$steps = array(
+		array('title' => 'COM_MINIORANGE_SAML_OV_STEP_1_TITLE', 'text' => 'COM_MINIORANGE_SAML_OV_STEP_1_TEXT'),
+		array('title' => 'COM_MINIORANGE_SAML_OV_STEP_2_TITLE', 'text' => 'COM_MINIORANGE_SAML_OV_STEP_2_TEXT'),
+		array('title' => 'COM_MINIORANGE_SAML_OV_STEP_3_TITLE', 'text' => 'COM_MINIORANGE_SAML_OV_STEP_3_TEXT'),
+		array('title' => 'COM_MINIORANGE_SAML_OV_STEP_4_TITLE', 'text' => 'COM_MINIORANGE_SAML_OV_STEP_4_TEXT'),
+	);
+
+	$resources = array(
+		array(
+			'icon'  => 'trial',
+			'tone'  => 'blue',
+			'title' => 'COM_MINIORANGE_SAML_OV_TRIAL_TITLE',
+			'text'  => 'COM_MINIORANGE_SAML_OV_TRIAL_TEXT',
+			'btn'   => 'COM_MINIORANGE_SAML_OV_TRIAL_BTN',
+			'href'  => Route::_('index.php?option=com_miniorange_saml&tab=support_tab&support=screen_share'),
+			'blank' => false,
+		),
+		array(
+			'icon'  => 'video',
+			'tone'  => 'red',
+			'title' => 'COM_MINIORANGE_SAML_OV_VIDEO_TITLE',
+			'text'  => 'COM_MINIORANGE_SAML_OV_VIDEO_TEXT',
+			'btn'   => 'COM_MINIORANGE_SAML_OV_VIDEO_BTN',
+			'href'  => 'https://youtube.com/playlist?list=PL2vweZ-PcNpdkpUxUzUCo66tZsEHJJDRl&si=rPnjmFLxaHFmqt1c',
+			'blank' => true,
+		),
+		array(
+			'icon'  => 'more',
+			'tone'  => 'amber',
+			'title' => 'COM_MINIORANGE_SAML_OV_MORE_TITLE',
+			'text'  => 'COM_MINIORANGE_SAML_OV_MORE_TEXT',
+			'btn'   => 'COM_MINIORANGE_SAML_OV_MORE_BTN',
+			'href'  => 'https://plugins.miniorange.com/joomla',
+			'blank' => true,
+		),
+	);
+
+	$setupUrl = Route::_('index.php?option=com_miniorange_saml&tab=idp');
+	$plansUrl = Route::_('index.php?option=com_miniorange_saml&tab=licensing');
+	$imageBase = Uri::base() . 'components/com_miniorange_saml/assets/images/';
 	?>
-	<div class="mo_boot_col-sm-12 mo_boot_mx-2">
-		<section class="mo_saml_section">
-			<div class="mo_saml_circle"></div>
-			<div class="mo_saml_content mo_boot_m-0 mo_boot_col-sm-7">
-				<div class="text_box">
-					<h2>miniOrange SAML SP plugin for Joomla</h2>
-					<p class="mo_boot_mb-4">
-						<?php echo $pluginDescription; ?>
-					</p>
-					<input type="button" class="mo_boot_btn btn_cstm" target="_blank"
-						onclick="window.open('https://plugins.miniorange.com/joomla-single-sign-on-sso')"
-						value="<?php echo Text::_('COM_MINIORANGE_SAML_VISIT_SITE'); ?>" />
-					<input type="button" class="mo_boot_btn btn_cstm" target="_blank"
-						onclick="window.open('https://plugins.miniorange.com/joomla-sso-ldap-mfa-solutions?section=saml-sp')"
-						value="<?php echo Text::_('COM_MINIORANGE_SAML_GUIDES'); ?>" />
-					<a class="mo_boot_btn btn_cstm"
-						href="<?php echo Route::_('index.php?option=com_miniorange_saml&tab=licensing') ?>"><?php echo Text::_('COM_MINIORANGE_SAML_LICENSE_PLANS'); ?></a>
-					<input type="button" class="mo_boot_btn btn_cstm" target="_blank"
-						onclick="window.open('https://faq.miniorange.com/kb/joomla')"
-						value="<?php echo Text::_('COM_MINIORANGE_SAML_FAQ'); ?>" />
+	<div class="mo_boot_col-sm-12">
+		<div class="mo_ov mo_boot_mt-2">
+			<div class="mo_ov_header">
+				<div class="mo_ov_brand">
+					<div class="mo_ov_logo" role="img" aria-label="miniOrange"></div>
+					<div class="mo_ov_brand_copy">
+						<h2><?php echo Text::_('COM_MINIORANGE_SAML_OV_TITLE'); ?></h2>
+						<p class="mo_ov_lead"><?php echo Text::_('COM_MINIORANGE_SAML_OV_INTRO'); ?></p>
+					</div>
+				</div>
+				<?php // phpcs:disable Joomla.ControlStructures.ControlStructuresBrackets ?>
+				<div class="mo_ov_status">
+					<?php if ($version !== '') : ?>
+						<span class="mo_ov_version">v<?php echo htmlspecialchars($version, ENT_QUOTES, 'UTF-8'); ?></span>
+					<?php endif; ?>
 				</div>
 			</div>
-			<div class="imgBox">
-				<img class="mo_saml_overview_image"
-					src="<?php echo Uri::base(); ?>/components/com_miniorange_saml/assets/images/overview_tab.png">
+
+			<div class="mo_ov_layout">
+				<section class="mo_ov_panel">
+					<h3 class="mo_ov_panel_title"><?php echo Text::_('COM_MINIORANGE_SAML_OV_STEPS'); ?></h3>
+					<ol class="mo_ov_steps mo_boot_mt-4">
+						<?php foreach ($steps as $index => $step) : ?>
+							<li class="mo_ov_step">
+								<span class="mo_ov_step_num"><?php echo (int) $index + 1; ?></span>
+								<div class="mo_ov_step_card">
+									<span class="mo_ov_step_title"><?php echo Text::_($step['title']); ?></span>
+									<span class="mo_ov_step_text"><?php echo Text::_($step['text']); ?></span>
+								</div>
+							</li>
+						<?php endforeach; ?>
+					</ol>
+					<a class="mo_ov_start mo_boot_mt-5" href="<?php echo $setupUrl; ?>" onclick="add_css_tab('#idptab'); return false;">
+						<?php echo Text::_('COM_MINIORANGE_SAML_OV_TRY'); ?>
+						<span aria-hidden="true">&rarr;</span>
+					</a>
+					<p class="mo_ov_plans"><?php echo Text::_('COM_MINIORANGE_SAML_OV_PLANS'); ?>
+						<a class="mo_ov_plans_link" href="<?php echo $plansUrl; ?>" onclick="add_css_tab('#licensingtab'); return false;"><?php echo Text::_('COM_MINIORANGE_SAML_OV_PLANS_LINK'); ?></a>
+					</p>
+				</section>
+
+				<div class="mo_ov_side">
+					<section class="mo_ov_panel">
+						<h3 class="mo_ov_panel_title"><?php echo Text::_('COM_MINIORANGE_SAML_OV_IDPS_TITLE'); ?></h3>
+						<div class="mo_ov_idps">
+							<?php foreach ($providers as $provider) : ?>
+								<?php
+								$label = Text::_($provider['label']);
+
+								if (!empty($provider['image']))
+								{
+									$icon = '<img src="' . htmlspecialchars($imageBase . $provider['image'], ENT_QUOTES, 'UTF-8') . '" alt="">';
+								}
+								else
+								{
+									$icon = moOverviewIcon($provider['icon']);
+								}
+								?>
+								<?php if ($provider['href'] !== '') : ?>
+									<a class="mo_ov_idp" href="<?php echo htmlspecialchars($provider['href'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
+										<span class="mo_ov_idp_icon"><?php echo $icon; ?></span>
+										<span class="mo_ov_idp_name"><?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?></span>
+									</a>
+								<?php else : ?>
+									<div class="mo_ov_idp mo_ov_idp_static">
+										<span class="mo_ov_idp_icon"><?php echo $icon; ?></span>
+										<span class="mo_ov_idp_name"><?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?></span>
+									</div>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</div>
+					</section>
+
+					<section class="mo_ov_panel mo_ov_panel_grow">
+						<h3 class="mo_ov_panel_title"><?php echo Text::_('COM_MINIORANGE_SAML_OV_RESOURCES'); ?></h3>
+						<div class="mo_ov_resources">
+							<?php foreach ($resources as $resource) : ?>
+								<div class="mo_ov_res_row">
+									<span class="mo_ov_res_icon mo_ov_res_icon_<?php echo htmlspecialchars($resource['tone'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo moOverviewIcon($resource['icon']); ?></span>
+									<div class="mo_ov_res_copy">
+										<span class="mo_ov_res_title"><?php echo Text::_($resource['title']); ?></span>
+										<span class="mo_ov_res_text"><?php echo Text::_($resource['text']); ?></span>
+									</div>
+									<a class="mo_ov_res_btn" href="<?php echo $resource['blank'] ? htmlspecialchars($resource['href'], ENT_QUOTES, 'UTF-8') : $resource['href']; ?>"<?php echo $resource['blank'] ? ' target="_blank" rel="noopener noreferrer"' : ''; ?>><?php echo Text::_($resource['btn']); ?></a>
+								</div>
+							<?php endforeach; ?>
+							<?php // phpcs:enable Joomla.ControlStructures.ControlStructuresBrackets ?>
+						</div>
+					</section>
+				</div>
 			</div>
-		</section>
+		</div>
 	</div>
 	<?php
 }
@@ -1956,6 +2031,36 @@ function moSsoLogin()
 		<div class="mo_boot_row mo_boot_p-2">
 			<div class="mo_boot_col-sm-12 mo_boot_px-2">
 				<h3 class="form-head form-head-bar ">
+					<?php echo Text::_('COM_MINIORANGE_SAML_SSO_URL'); ?>
+				</h3>
+				<div class="mo_boot_col-sm-12 mo_boot_p-2 mo_boot_mt-4 mo_saml_mini_section">
+					<div class="mo_boot_row mo_boot_m-3 mo_boot_align-items-center">
+						<div class="mo_boot_col-sm-3">
+							<span><?php echo Text::_('COM_MINIORANGE_SAML_SSO_URL'); ?> :</span>
+							<p class="mo_boot_mb-0 mo_boot_mt-1"><?php echo Text::_('COM_MINIORANGE_SAML_SSO_URL_TIP'); ?></p>
+						</div>
+						<div class="mo_boot_col-sm-9">
+							<div class="mo_saml_highlight_background_url_note mo_boot_p-0">
+								<div class="mo_boot_row mo_boot_m-2 mo_boot_align-items-center">
+									<div class="mo_boot_col-11">
+										<span id="login_settings_sso_url" class="mo_saml_text mo_boot_color">
+											<strong><?php echo $spBaseUrl . '?morequest=sso'; ?></strong>
+										</span>
+									</div>
+									<div class="mo_boot_col-1">
+										<em class="fa fa-lg fa-copy mo_copy_sso_login_url mo_copytooltip"
+											onclick="copyToClipboard('#login_settings_sso_url');"
+											title="<?php echo Text::_('COM_MINIORANGE_SAML_COPY'); ?>"></em>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="mo_boot_col-sm-12 mo_boot_px-2 mo_boot_mt-4">
+				<h3 class="form-head form-head-bar ">
 					<?php echo Text::_('COM_MINIORANGE_SAML_ACCOUNT_CREATION_SETTINGS'); ?><sup><strong><a href='#'
 								class='premium' onclick="moSAMLUpgrade();"> <img class="crown_img_small mo_boot_mx-2"
 									src="<?php echo Uri::base(); ?>/components/com_miniorange_saml/assets/images/crown.webp"></a></strong></sup>
@@ -2775,14 +2880,15 @@ function selectIdentityProvider()
 
 	$app = Factory::getApplication();
 	$idpEditId = $app->input->get('id', '', 'string');
-	$isEditMode = !empty($idpEditId) && $idpEditId !== 'new';
+	$idpConfigured = !empty($idpEntityId) && !empty($singleSignonServiceUrl);
+	$isEditMode = $idpEditId !== 'new' && (!empty($idpEditId) || $idpConfigured);
 	$uploadTabClass = $isEditMode ? '' : 'mo_saml_current_tab';
 	$manualTabClass = $isEditMode ? 'mo_saml_current_tab' : '';
 	$idpDataClass = $isEditMode ? '' : 'mo_saml_display_none';
 	$uploadFormClass = $isEditMode ? 'mo_saml_display_none' : '';
 	?>
 
-	<div class="mo_boot_col-sm-12 mo_main_saml_section">
+	<div id="mo_saml_idp_setup_section" class="mo_boot_col-sm-12 mo_main_saml_section">
 		<form action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.saveConfig'); ?>"
 			method="post" name="adminForm" id="identityProviderSettings_form" enctype="multipart/form-data">
 			<?php echo HTMLHelper::_('form.token'); ?>
@@ -2793,10 +2899,15 @@ function selectIdentityProvider()
 						<?php echo Text::_('COM_MINIORANGE_SAML_CHOOSE_METHOD'); ?>
 					</h3>
 				</div>
-				<a href="<?php echo Route::_('index.php?option=com_miniorange_saml&tab=idp'); ?>"
-					class="mo_boot_btn btn_cstm mo_boot_ml-auto">
-					<i class="fa fa-arrow-left"></i> <?php echo Text::_('COM_MINIORANGE_SAML_BACK'); ?>
-				</a>
+				<div class="mo_boot_ml-auto">
+					<a href="https://plugins.miniorange.com/joomla-sso-ldap-mfa-solutions?section=saml-sp"
+						target="_blank" class="mo_boot_btn btn_cstm mo_boot_mr-2">
+						<?php echo Text::_('COM_MINIORANGE_SAML_GUIDES'); ?>
+					</a>
+					<button type="button" class="mo_boot_btn btn_cstm" onclick="showImportExportConfig()">
+						<?php echo Text::_('COM_MINIORANGE_SAML_IMPORT_EXPORT'); ?>
+					</button>
+				</div>
 
 				<ul class="switch_tab_sp mo_boot_text-center mo_boot_p-0 mo_boot_mt-4 ">
 					<li class="<?php echo $uploadTabClass; ?>" id="auto_configuration"><a href="#" id="mo_saml_upload_idp_tab"
@@ -2819,10 +2930,6 @@ function selectIdentityProvider()
 									<h3 class="mo_saml_form_head mo_boot_col-sm-4">
 										<?php echo Text::_('COM_MINIORANGE_SAML_BASIC_CONFIG'); ?>
 									</h3>
-									<a href="https://plugins.miniorange.com/joomla-sso-ldap-mfa-solutions?section=saml-sp"
-										target="_blank" class="mo_boot_btn btn_cstm mo_saml_documentation_link">
-										<?php echo Text::_('COM_MINIORANGE_SAML_GUIDES'); ?>
-									</a>
 								</div>
 							</div>
 							<div class="mo_boot_row mo_boot_m-4" id="sp_name_idp">
@@ -3050,11 +3157,17 @@ function selectIdentityProvider()
 					<div class="mo_boot_row m-0 p-0 mo_boot_mt-5 mo_boot_col-sm-12 ">
 						<div class="mo_boot_col-sm-12 m-0 p-0 mo_boot_text-center">
 							<input type="hidden"
-								value="<?php echo $spBaseUrl . 'administrator/index.php?morequest=sso&q=test_config'; ?>"
+								value="<?php echo $spBaseUrl . '?morequest=sso&q=test_config'; ?>"
 								id="test_config_url">
 							<input type="hidden" value="" id="testarati">
 							<input type="submit" class="mo_boot_btn btn_cstm mo_boot_mt-2"
 								value="<?php echo Text::_('COM_MINIORANGE_SAML_SAVE_BTN'); ?>" />
+							<button type="button" id="test-config" class="mo_boot_btn btn_cstm mo_boot_mt-2"
+								onclick="showTestWindow()"
+								title="<?php echo Text::_('COM_MINIORANGE_SAML_TEST_CONFIG_TITLE'); ?>"
+								<?php echo $idpConfigured ? '' : 'disabled'; ?>>
+								<?php echo Text::_('COM_MINIORANGE_SAML_TEST_CONFIG'); ?>
+							</button>
 							<input type="submit" name="reset_config" class="mo_boot_btn btn_cstm btn_cstm_red mo_boot_mt-2"
 								title="<?php echo Text::_('COM_MINIORANGE_SAML_PROXY_RESET_BTN'); ?>"
 								value="<?php echo Text::_('COM_MINIORANGE_SAML_PROXY_RESET_BTN'); ?>" />
@@ -3066,10 +3179,6 @@ function selectIdentityProvider()
 
 		</form>
 
-		<form name="f" id="mo_sp_exp_exportconfig" method="post"
-			action="<?php echo Route::_('index.php?option=com_miniorange_saml&task=myaccount.importexport'); ?>">
-			<?php echo HTMLHelper::_('form.token'); ?>
-		</form>
 		<div class="mo_boot_row <?php echo $uploadFormClass; ?>" id="upload_metadata_form">
 			<div class="mo_boot_col-sm-12 mo_boot_p-2 mo_saml_mini_section">
 				<form
@@ -3166,6 +3275,9 @@ function moSamlLocalSupport()
 
 	$queryPhoneCode = '';
 	$queryPhoneNumber = '';
+	$supportApp = Factory::getApplication();
+	$supportInput = method_exists($supportApp, 'getInput') ? $supportApp->getInput() : $supportApp->input;
+	$showScreenShare = $supportInput->get('support', '', 'cmd') === 'screen_share';
 
 	if (!empty($adminPhone) && preg_match('/^\+(\d{1,4})\s*(.*)$/', trim($adminPhone), $m))
 	{
@@ -3202,19 +3314,19 @@ function moSamlLocalSupport()
 
 	<div class="mo_boot_col-sm-12 mo_main_saml_section">
 	<ul class="switch_tab_sp mo_boot_text-center mo_boot_p-0 mo_boot_mt-4 " id="support-subtabs">
-		<li class="mo_saml_current_tab" id="general_query_tab" data-panel="mo_general_support">
+		<li class="<?php echo $showScreenShare ? '' : 'mo_saml_current_tab'; ?>" id="general_query_tab" data-panel="mo_general_support">
 			<a href="#" class="mo_saml_bs_btn mo-support-subtab">
 				<?php echo Text::_('COM_MINIORANGE_SAML_GENERAL_QUERY'); ?>
 			</a>
 		</li>
 
-		<li class="" id="setup_meeting_tab" data-panel="mo_screen_share">
+		<li class="<?php echo $showScreenShare ? 'mo_saml_current_tab' : ''; ?>" id="setup_meeting_tab" data-panel="mo_screen_share">
 			<a href="#" class="mo_saml_bs_btn mo-support-subtab">
 				<?php echo Text::_('COM_MINIORANGE_SAML_SETUP_SCREEN'); ?>
 			</a>
 		</li>
 	</ul>
-	<div class="mo_boot_col-sm-12 mo-support-panel mo-support-panel-active" id="mo_general_support">
+	<div class="mo_boot_col-sm-12 mo-support-panel<?php echo $showScreenShare ? '' : ' mo-support-panel-active'; ?>" id="mo_general_support">
 		<div class="mo_boot_row mo_boot_p-0">
 			<div class="mo_boot_col-sm-12 mo_boot_px-2">
 			   
@@ -3299,7 +3411,7 @@ function moSamlLocalSupport()
 		</div>
 	</div>
 
-	<div class="mo_boot_col-sm-12 mo-support-panel" id="mo_screen_share">
+	<div class="mo_boot_col-sm-12 mo-support-panel<?php echo $showScreenShare ? ' mo-support-panel-active' : ''; ?>" id="mo_screen_share">
 		<div class="mo_boot_row mo_boot_p-0">
 			<div class="mo_boot_col-sm-12 mo_boot_px-2">
 
@@ -3472,95 +3584,6 @@ function addOnDescription()
 	</div>
 	<?php
 }
-function identityProviderSettings()
-{
-	$attribute = new Mo_Saml_Local_Util;
-	$attribute = $attribute->loadDbValues('#__miniorange_saml_config');
-
-	$idpName = isset($attribute['idp_name']) ? $attribute['idp_name'] : '';
-	$idpEntityId = isset($attribute['idp_entity_id']) ? $attribute['idp_entity_id'] : '';
-	$idpConfigured = !empty($attribute['idp_entity_id']) && !empty($attribute['single_signon_service_url']);
-	$siteUrl = Uri::root();
-	$spBaseUrl = $siteUrl;
-	?>
-
-	<input type="hidden" value="<?php echo $siteUrl . '?morequest=sso&q=test_config'; ?>" id="test_config_url">
-	<input type="hidden" value="" id="testarati">
-
-	<div id="idp_list_table" class="mo_boot_col-sm-12 mo_main_saml_section">
-		<div class="mo_boot_row mo_boot_p-2">
-			<div class="mo_boot_col-sm-12 mo_boot_px-2">
-				<div class="mo_boot_row mo_boot_mb-4">
-					<div class="mo_boot_col-sm-7">
-						<h3 class="mo_saml_form_heading">
-							<?php echo Text::_('COM_MINIORANGE_SAML_IDENTITY_PROVIDER_SETTINGS'); ?>
-						</h3>
-					</div>
-				   
-					<div class="mo_boot_col-sm-5 mo_saml_btn_end">
-						<?php renderIdpSettingsHeaderButtons($idpConfigured); ?>
-					</div>
-				</div>
-
-				<div class="mo_boot_row mo_boot_mb-4">
-					<div class="mo_boot_col-sm-4">
-						<div class="input-group">
-							<input type="text" class="mo-form-control" id="idp-search" placeholder="<?php echo Text::_('COM_MINIORANGE_SAML_SEARCH_IDP_PLACEHOLDER'); ?>" />
-						</div>
-					</div>
-				</div>
-
-				<div class="mo_boot_row">
-					<div class="mo_boot_col-sm-12">
-						<div class="mo_saml_mini_section">
-							<table class="mo_boot_m-0 mo_boot_col-sm-12">
-								<thead>
-									<tr>
-										<th class="mo_boot_p-4 mo_boot_col-sm-3 mo_boot_text-center">
-											<?php echo Text::_('COM_MINIORANGE_SAML_IDP_NAME'); ?>
-										</th>
-										<th class="mo_boot_p-4 mo_boot_text-center">
-											<?php echo Text::_('COM_MINIORANGE_SAML_SSO_URL'); ?>
-										</th>
-										<th class="mo_boot_p-4 mo_boot_col-sm-3 mo_boot_text-center">
-											<?php echo Text::_('COM_MINIORANGE_SAML_ACTION'); ?>
-										</th>
-									</tr>
-									<tr>
-										<td colspan="3">
-											<hr class="mo_boot_m-0">
-										</td>
-									</tr>
-								</thead>
-								<tbody id="idp-table-body">
-									<?php renderIdpSettingsTableRows($idpEntityId, $idpName, $spBaseUrl); ?>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</div>
-
-
-				<div class="mo_boot_row mo_boot_mt-4">
-					<div class="mo_boot_col-sm-12">
-						<div class="mo_boot_row">
-							<div class="mo_boot_col-sm-10">
-								<p><?php echo Text::_('COM_MINIORANGE_SAML_SWITCHING_ENVIRONMENTS'); ?> &nbsp; <?php echo Text::_('COM_MINIORANGE_SAML_IMPORT_EXPORT_CONFIG_HERE'); ?></p>
-							</div>
-							<div class="mo_boot_col-sm-2 mo_saml_btn_end">
-								<button class="mo_boot_btn btn_cstm" onclick="showImportExportConfig()">
-									<?php echo Text::_('COM_MINIORANGE_SAML_IMPORT_EXPORT'); ?>
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-	<?php
-}
-
 function importExportConfiguration()
 {
 	$attribute = new Mo_Saml_Local_Util;

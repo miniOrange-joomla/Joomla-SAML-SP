@@ -2282,9 +2282,11 @@ return $importEnc;
 							$doc = $this->rawNode->ownerDocument;
 						}
 
-						$previousLoader = libxml_set_external_entity_loader(function () {
-							return null;
-						});
+						$previousLoader = libxml_set_external_entity_loader(
+							function () {
+								return null;
+							}
+						);
 						$newFrag = $doc->createDocumentFragment();
 						$appended = $newFrag->appendXML($decrypted);
 						libxml_set_external_entity_loader($previousLoader);
@@ -2293,6 +2295,7 @@ return $importEnc;
 						{
 							throw new Exception('Failed to parse decrypted XML.');
 						}
+
 						$parent = $this->rawNode->parentNode;
 						$parent->replaceChild($newFrag, $this->rawNode);
 

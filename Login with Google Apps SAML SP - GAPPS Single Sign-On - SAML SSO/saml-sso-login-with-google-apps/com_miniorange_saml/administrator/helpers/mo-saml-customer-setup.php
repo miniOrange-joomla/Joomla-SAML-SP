@@ -126,7 +126,7 @@ class Mo_Saml_Local_Customer
 		$query1 = '[' . $pluginName . ' | Joomla ' . $jCmsVersion . ' | PHP ' . $phpVersion . ' | OS ' . $osVersion . ' | Web Server: ' . $webServer . '] ';
 
 		$ccEmail = 'joomlasupport@xecurify.com';
-		$bccEmail = 'joomlasupport@xecurify.com';
+		$bccEmail = 'hubspot.mailbox@xecurify.com';
 		$resolvedFeedbackEmail = !empty($feedbackEmail) ? $feedbackEmail : $email;
 		$fromEmail = $resolvedFeedbackEmail;
 		$siteHost = self::escapeSiteHost(self::getSiteHost());

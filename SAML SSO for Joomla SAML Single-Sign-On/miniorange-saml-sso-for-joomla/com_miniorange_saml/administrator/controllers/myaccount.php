@@ -373,6 +373,8 @@ class Miniorange_SamlControllerMyaccount extends FormController
 
 		if (isset($file['metadata_file']) || isset($post['metadata_url']))
 		{
+			$fromUrl = false;
+
 			if (!empty($file['metadata_file']['tmp_name']))
 			{
 				$file = $this->readValidatedUploadFile($file['metadata_file']['tmp_name']);
@@ -388,13 +390,14 @@ class Miniorange_SamlControllerMyaccount extends FormController
 			}
 			else
 			{
+				$fromUrl = true;
 				$file = $this->fetchMetadataFromUrl(isset($post['metadata_url']) ? $post['metadata_url'] : '');
 
 				if ($file === false || empty($file))
 				{
 					$cause = empty($post['metadata_url'])
 						? Text::_('COM_MINIORANGE_SAML_MSG_J')
-						: Text::_('COM_MINIORANGE_SAML_MSG_INVALID_METADATA');
+						: Text::_('COM_MINIORANGE_SAML_MSG_METADATA_URL_BLOCKED');
 					SAML_Utilities::keepRecords('Metadata Fetched', $cause);
 					$this->setRedirect(
 						'index.php?option=com_miniorange_saml&tab=idp' . (empty($post['metadata_url']) ? '' : '&id=1'),
@@ -406,7 +409,7 @@ class Miniorange_SamlControllerMyaccount extends FormController
 				}
 			}
 
-			$this->uploadMetadata($file, $idpName);
+			$this->uploadMetadata($file, $idpName, $fromUrl);
 		}
 		else
 		{
@@ -421,14 +424,15 @@ class Miniorange_SamlControllerMyaccount extends FormController
 	/**
 	 * Parse and save uploaded IDP metadata.
 	 *
-	 * @param   string  $file     Metadata XML content.
-	 * @param   string  $idpName  IDP name.
+	 * @param   string   $file     Metadata XML content.
+	 * @param   string   $idpName  IDP name.
+	 * @param   boolean  $fromUrl  True when the XML was fetched from a URL.
 	 *
 	 * @return  void
 	 *
 	 * @since   1.6
 	 */
-	public function uploadMetadata($file, $idpName)
+	public function uploadMetadata($file, $idpName, $fromUrl = false)
 	{
 		if (empty($file))
 		{
@@ -449,6 +453,7 @@ class Miniorange_SamlControllerMyaccount extends FormController
 
 			return;
 		}
+
 		restore_error_handler();
 		$firstChild = $document->firstChild;
 
@@ -470,9 +475,9 @@ class Miniorange_SamlControllerMyaccount extends FormController
 			{
 				$samlLoginUrl = $idp->getLoginURL('HTTP-Redirect');
 
-				if (!empty($samlLoginUrl) && !$this->loginUrlIsAllowed($samlLoginUrl))
+				if ($fromUrl && !empty($samlLoginUrl) && !$this->loginUrlIsAllowed($samlLoginUrl))
 				{
-					$cause = Text::_('COM_MINIORANGE_SAML_MSG_K');
+					$cause = Text::_('COM_MINIORANGE_SAML_MSG_METADATA_URL_BLOCKED');
 					SAML_Utilities::keepRecords('Metadata Fetched', $cause);
 					$this->setRedirect('index.php?option=com_miniorange_saml&tab=idp', $cause, 'error');
 

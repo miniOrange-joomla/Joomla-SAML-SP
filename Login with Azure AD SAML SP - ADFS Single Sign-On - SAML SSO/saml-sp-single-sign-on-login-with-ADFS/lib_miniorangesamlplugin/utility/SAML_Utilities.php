@@ -1363,13 +1363,15 @@ class SAML_Utilities
 			return false;
 		}
 
-		libxml_set_external_entity_loader(function () {
-			return null;
-		});
+		libxml_set_external_entity_loader(
+			function () {
+				return null;
+			}
+		);
 
 		try
 		{
-			$document = new DOMDocument();
+			$document = new DOMDocument;
 			$loaded = $document->loadXML($xml, LIBXML_NONET);
 		}
 		finally

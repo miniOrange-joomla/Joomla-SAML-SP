@@ -7,7 +7,7 @@
     <authorUrl>https://www.miniorange.com/</authorUrl>
     <copyright>Copyright (C) 2015 miniOrange. All rights reserved.</copyright>
     <license>GNU General Public License version 3; see LICENSE.txt</license> 
-    <version>6.7</version>
+    <version>6.8</version>
     <description>SAML SSO for Joomla - Developed by miniOrange</description>
     
     <install> <!-- Runs on install -->
@@ -48,8 +48,8 @@
         <menu img="media/com_miniorange_saml/images/s_com_miniorange_saml.png" >COM_MINIORANGE_SAML</menu>
 		<submenu>
             <menu link="option=com_miniorange_saml&amp;tab=overview">COM_MINIORANGE_SAML_SP_OVERVIEW</menu>
+            <menu link="option=com_miniorange_saml&amp;tab=description">COM_MINIORANGE_SAML_DESCRIPTION </menu>
             <menu link="option=com_miniorange_saml&amp;tab=idp">COM_MINIORANGE_SAML_IDP </menu>
-			<menu link="option=com_miniorange_saml&amp;tab=description">COM_MINIORANGE_SAML_DESCRIPTION </menu>
 			<menu link="option=com_miniorange_saml&amp;tab=sso_settings">COM_MINIORANGE_SAML_LOGINSETTINGS </menu>
 			<menu link="option=com_miniorange_saml&amp;tab=attribute_mapping">COM_MINIORANGE_SAML_MAPPING</menu>
 			<menu link="option=com_miniorange_saml&amp;tab=licensing">COM_MINIORANGE_SAML_LICENSING </menu>
